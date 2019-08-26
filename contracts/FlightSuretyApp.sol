@@ -1,6 +1,6 @@
-pragma solidity ^0.4.25;
+pragma solidity >=0.4.24;
 
-import "../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "./SafeMath.sol";
 
 contract FlightSuretyApp {
     using SafeMath for uint256;
@@ -9,7 +9,6 @@ contract FlightSuretyApp {
     /*                                       DATA VARIABLES                                     */
     /********************************************************************************************/
 
-    // Flight status codes
     uint8 private constant STATUS_CODE_UNKNOWN = 0;
     uint8 private constant STATUS_CODE_ON_TIME = 10;
     uint8 private constant STATUS_CODE_LATE_AIRLINE = 20; // only code that results in payout
@@ -18,6 +17,9 @@ contract FlightSuretyApp {
     uint8 private constant STATUS_CODE_LATE_OTHER = 50;
 
     address private contractOwner;
+    bool private operational = true;
+
+    FlightSuretyData flightSuretyData;
 
     struct Flight {
         bool isRegistered;
@@ -30,25 +32,22 @@ contract FlightSuretyApp {
 
 
     /********************************************************************************************/
+    /*                                       EVENT DEFINITIONS                                  */
+    /********************************************************************************************/
+
+    // @todo
+
+
+    /********************************************************************************************/
     /*                                       FUNCTION MODIFIERS                                 */
     /********************************************************************************************/
 
-    /**
-    * @dev Modifier that requires the "operational" boolean variable to be "true"
-    *      This is used on all state changing functions to pause the contract in 
-    *      the event there is an issue that needs to be fixed
-    */
     modifier requireIsOperational()
     {
-        // Modify to call data contract's status
-        require(true, "Contract is currently not operational");
+        require(operational, "Contract is currently not operational");
         _;
-        // All modifiers require an "_" which indicates where the function body will be added
     }
 
-    /**
-    * @dev Modifier that requires the "ContractOwner" account to be the function caller
-    */
     modifier requireContractOwner()
     {
         require(msg.sender == contractOwner, "Caller is not contract owner");
@@ -59,31 +58,26 @@ contract FlightSuretyApp {
     /*                                       CONSTRUCTOR                                        */
     /********************************************************************************************/
 
-    /**
-    * @dev Contract constructor
-    *
-    */
-    constructor
-    (
-    )
-    public
+    constructor(address flightSuretyDataContractAddress) public
     {
-        // reference FlightSuretyData
         contractOwner = msg.sender;
+        flightSuretyData = FlightSuretyData(flightSuretyDataContractAddress);
     }
 
     /********************************************************************************************/
     /*                                       UTILITY FUNCTIONS                                  */
     /********************************************************************************************/
 
-    function isOperational()
-    public
-    pure
-    returns (bool)
+    function isOperational() public view returns (bool)
     {
-        return true;
-        // Modify to call data contract's status
+        return operational;
     }
+
+    function setOperatingStatus (bool mode) external requireContractOwner
+    {
+        operational = mode;
+    }
+
 
     /********************************************************************************************/
     /*                                     SMART CONTRACT FUNCTIONS                             */
@@ -157,7 +151,10 @@ contract FlightSuretyApp {
     }
 
 
-    // region ORACLE MANAGEMENT ************************
+
+    /********************************************************************************************/
+    /*                                     ORACLE MANAGEMENT                                    */
+    /********************************************************************************************/
 
     // Incremented to add pseudo-randomness at various points
     uint8 private nonce = 0;
@@ -329,4 +326,13 @@ contract FlightSuretyApp {
 
     // endregion
 
-}   
+}
+
+
+/********************************************************************************************/
+/*                               STUB FOR DATA CONTRACT                                     */
+/********************************************************************************************/
+
+contract FlightSuretyData {
+
+}

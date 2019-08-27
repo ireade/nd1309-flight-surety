@@ -28,7 +28,7 @@ contract FlightSuretyApp {
         uint8 statusCode;
         uint256 updatedTimestamp;
         address airline;
-        string code;
+        string flight;
     }
 
     mapping(bytes32 => Flight) private flights;
@@ -85,10 +85,10 @@ contract FlightSuretyApp {
         flightSuretyData = FlightSuretyData(flightSuretyDataContractAddress);
 
         // @todo: fix?
-        for(var i = 0; i < 3; i++) {
-            bytes32 flightKey = getFlightKey(msg.sender, i, now);
-            flights[flightKey] = Flight(20, now, msg.sender, i);
-        }
+//        for(var i = 0; i < 3; i++) {
+//            bytes32 flightKey = getFlightKey(msg.sender, i, now);
+//            flights[flightKey] = Flight(20, now, msg.sender, i);
+//        }
     }
 
     /********************************************************************************************/
@@ -175,18 +175,18 @@ contract FlightSuretyApp {
 
     /* Flights flow ********************** */
 
-    function registerFlight(uint8 status, string code)
+    function registerFlight(uint8 status, string flight)
     external
     onlyPaidAirlines
     {
-        bytes32 flightKey = getFlightKey(msg.sender, code, now);
+        bytes32 flightKey = getFlightKey(msg.sender, flight, now);
 
-        flights[flightKey] = Flight(status, now, msg.sender, code);
+        flights[flightKey] = Flight(status, now, msg.sender, flight);
     }
 
     function getFlightStatus(bytes32 flight) public view returns(uint8)
     {
-        return flights[flightKey].status;
+        return flights[flight].statusCode;
     }
 
     /**
@@ -203,6 +203,9 @@ contract FlightSuretyApp {
     internal
     pure
     {
+        //bytes32 flightKey = getFlightKey(msg.sender, flight, now);
+
+        // @todo update flight status
     }
 
 
@@ -236,28 +239,21 @@ contract FlightSuretyApp {
     // Incremented to add pseudo-randomness at various points
     uint8 private nonce = 0;
 
-    // Fee to be paid when registering oracle
     uint256 public constant REGISTRATION_FEE = 1 ether;
 
-    // Number of oracles that must respond for valid status
     uint256 private constant MIN_RESPONSES = 3;
-
 
     struct Oracle {
         bool isRegistered;
         uint8[3] indexes;
     }
 
-    // Track all registered oracles
     mapping(address => Oracle) private oracles;
 
-    // Model for responses from oracles
     struct ResponseInfo {
         address requester;                              // Account that requested status
         bool isOpen;                                    // If open, oracle responses are accepted
         mapping(uint8 => address[]) responses;          // Mapping key is the status code reported
-        // This lets us group responses and identify
-        // the response that majority of the oracles
     }
 
     // Track all oracle responses
@@ -275,43 +271,22 @@ contract FlightSuretyApp {
     event OracleRequest(uint8 index, address airline, string flight, uint256 timestamp);
 
 
-    // Register an oracle with the contract
-    function registerOracle
-    (
-    )
-    external
-    payable
+    function registerOracle() external payable
     {
-        // Require registration fee
         require(msg.value >= REGISTRATION_FEE, "Registration fee is required");
 
         uint8[3] memory indexes = generateIndexes(msg.sender);
 
-        oracles[msg.sender] = Oracle({
-            isRegistered : true,
-            indexes : indexes
-            });
+        oracles[msg.sender] = Oracle({ isRegistered : true, indexes : indexes });
     }
 
-    function getMyIndexes
-    (
-    )
-    view
-    external
-    returns (uint8[3])
+    function getMyIndexes() view external returns (uint8[3])
     {
         require(oracles[msg.sender].isRegistered, "Not registered as an oracle");
 
         return oracles[msg.sender].indexes;
     }
 
-
-
-
-    // Called by oracle when a response is available to an outstanding request
-    // For the response to be accepted, there must be a pending request that is open
-    // and matches one of the three Indexes randomly assigned to the oracle at the
-    // time of registration (i.e. uninvited oracles are not welcome)
     function submitOracleResponse
     (
         uint8 index,
@@ -330,9 +305,8 @@ contract FlightSuretyApp {
 
         oracleResponses[key].responses[statusCode].push(msg.sender);
 
-        // Information isn't considered verified until at least MIN_RESPONSES
-        // oracles respond with the *** same *** information
         emit OracleReport(airline, flight, timestamp, statusCode);
+
         if (oracleResponses[key].responses[statusCode].length >= MIN_RESPONSES) {
 
             emit FlightStatusInfo(airline, flight, timestamp, statusCode);
@@ -342,13 +316,7 @@ contract FlightSuretyApp {
         }
     }
 
-
-    function getFlightKey
-    (
-        address airline,
-        string flight,
-        uint256 timestamp
-    )
+    function getFlightKey(address airline, string flight, uint256 timestamp)
     pure
     internal
     returns (bytes32)
@@ -356,13 +324,7 @@ contract FlightSuretyApp {
         return keccak256(abi.encodePacked(airline, flight, timestamp));
     }
 
-    // Returns array of three non-duplicating integers from 0-9
-    function generateIndexes
-    (
-        address account
-    )
-    internal
-    returns (uint8[3])
+    function generateIndexes(address account) internal returns (uint8[3])
     {
         uint8[3] memory indexes;
         indexes[0] = getRandomIndex(account);
@@ -380,13 +342,7 @@ contract FlightSuretyApp {
         return indexes;
     }
 
-    // Returns array of three non-duplicating integers from 0-9
-    function getRandomIndex
-    (
-        address account
-    )
-    internal
-    returns (uint8)
+    function getRandomIndex(address account) internal returns (uint8)
     {
         uint8 maxValue = 10;
 
@@ -400,8 +356,6 @@ contract FlightSuretyApp {
 
         return random;
     }
-
-    // endregion
 
 }
 

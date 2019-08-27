@@ -1,5 +1,5 @@
-var Test = require('../config/testConfig.js');
-var BigNumber = require('bignumber.js');
+const Test = require('../config/testConfig.js');
+const BigNumber = require('bignumber.js');
 
 let config;
 let accounts;

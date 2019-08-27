@@ -44,6 +44,10 @@ contract FlightSuretyApp {
         address airlineAddress;
         AirlineState state;
         string name;
+
+        // Approvals
+        mapping(address => bool) approvals;
+        uint8 approvalCount;
     }
 
     mapping(address => Airline) private airlines;
@@ -91,9 +95,9 @@ contract FlightSuretyApp {
         contractOwner = msg.sender;
         flightSuretyData = FlightSuretyData(flightSuretyDataContractAddress);
 
-        // todo: register first airline
-        //airlines[msg.sender] = Airline(msg.sender, AirlineState.Paid, "First Airline");
-        //totalPaidAirlines++;
+        // @todo: Change to Registered and wait for payment
+        airlines[msg.sender] = Airline(msg.sender, AirlineState.Paid, "First Airline", 0);
+        totalPaidAirlines++;
     }
 
     /********************************************************************************************/
@@ -117,11 +121,21 @@ contract FlightSuretyApp {
 
     /* Airline flow ********************** */
 
+    function getAirlineState(address airline) external view returns (AirlineState)
+    {
+        return airlines[airline].state;
+    }
+
     function applyForAirlineRegistration(string airlineName) external
     {
         require(airlines[msg.sender].airlineAddress == address(0), "Airline already in queue");
 
-        airlines[msg.sender] = Airline(msg.sender, AirlineState.Applied, airlineName);
+        airlines[msg.sender] = Airline(
+                msg.sender,
+                AirlineState.Applied,
+                airlineName,
+                0
+        );
 
         // todo: Event: New airline application
     }
@@ -133,14 +147,28 @@ contract FlightSuretyApp {
         approved = false;
 
         if (totalPaidAirlines < NO_AIRLINES_REQUIRED_FOR_CONSENSUS_VOTING) {
+
             approved = true;
+
         } else {
-            // Consensus
+
+            require(!airlines[airline].approvals[msg.sender], "Caller has already given approval");
+
+            airlines[airline].approvals[msg.sender] = true;
+            airlines[airline].approvalCount++;
+
+            // @todo: calculate number of approvals required
+
+            if (airlines[airline].approvalCount == 3) approved = true;
+        }
+
+        if (approved) {
+            airlines[airline].state = AirlineState.Paid; // @todo: change to registered
+            totalPaidAirlines++; // @todo remove
         }
 
         // todo: emit event is approved is true
 
-        if (approved) airlines[airline].state = AirlineState.Registered;
         return approved;
     }
 

@@ -8,7 +8,7 @@ https://review.udacity.com/#!/rubrics/1711/view
 - [ ] Dapp Created and Used for Contract Calls
 - [ ] Oracle Server Application
 - [ ] Operational status control is implemented in contracts
-- [ ] Contract functions “fail fast” by having a majority of “require()” calls at the beginning of function body
+- [x] Contract functions “fail fast” by having a majority of “require()” calls at the beginning of function body
 
 
 ## Airlines

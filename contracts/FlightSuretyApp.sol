@@ -54,7 +54,7 @@ contract FlightSuretyApp {
 
     uint private totalPaidAirlines = 0;
 
-    uint8 private constant NO_AIRLINES_REQUIRED_FOR_CONSENSUS_VOTING = 5;
+    uint8 private constant NO_AIRLINES_REQUIRED_FOR_CONSENSUS_VOTING = 4;
 
 
     /********************************************************************************************/
@@ -80,9 +80,15 @@ contract FlightSuretyApp {
         _;
     }
 
+    modifier onlyRegisteredAirlines()
+    {
+        require(airlines[msg.sender].state == AirlineState.Registered, "Only registered allowed");
+        _;
+    }
+
     modifier onlyPaidAirlines()
     {
-        require(airlines[msg.sender].state == AirlineState.Paid, "Only fully paid airline allowed");
+        require(airlines[msg.sender].state == AirlineState.Paid, "Only paid airlines allowed");
         _;
     }
 
@@ -163,8 +169,7 @@ contract FlightSuretyApp {
         }
 
         if (approved) {
-            airlines[airline].state = AirlineState.Paid; // @todo: change to registered
-            totalPaidAirlines++; // @todo remove
+            airlines[airline].state = AirlineState.Registered;
         }
 
         // todo: emit event is approved is true
@@ -172,15 +177,14 @@ contract FlightSuretyApp {
         return approved;
     }
 
-    function payAirlineDues
-    (
-
-    )
-    payable
+    function payAirlineDues() external payable onlyRegisteredAirlines
     {
+        require(msg.value == 10 ether, "Payment of 10 ether is required");
 
-        // increment totalPaidAirlines
+        airlines[msg.sender].state = AirlineState.Paid;
+        totalPaidAirlines++;
 
+        // @todo: emit paid event
     }
 
 

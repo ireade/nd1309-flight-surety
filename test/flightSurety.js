@@ -57,10 +57,12 @@ it('Airlines can apply for registration', async function () {
 
     await config.flightSuretyApp.applyForAirlineRegistration("Fifth Airline", { from: accounts[5] });
 
-    assert.equal(await config.flightSuretyApp.getAirlineState(secondAirline), 0, "2nd applied airline is of incorrect state");
-    assert.equal(await config.flightSuretyApp.getAirlineState(thirdAirline), 0, "3rd applied airline is of incorrect state");
-    assert.equal(await config.flightSuretyApp.getAirlineState(fourthAirline), 0, "4th applied airline is of incorrect state");
-    assert.equal(await config.flightSuretyApp.getAirlineState(fifthAirline), 0, "5th applied airline is of incorrect state");
+    const appliedState = 0;
+
+    assert.equal(await config.flightSuretyApp.getAirlineState(secondAirline), appliedState, "2nd applied airline is of incorrect state");
+    assert.equal(await config.flightSuretyApp.getAirlineState(thirdAirline), appliedState, "3rd applied airline is of incorrect state");
+    assert.equal(await config.flightSuretyApp.getAirlineState(fourthAirline), appliedState, "4th applied airline is of incorrect state");
+    assert.equal(await config.flightSuretyApp.getAirlineState(fifthAirline), appliedState, "5th applied airline is of incorrect state");
 });
 
 it('Paid airline can approve up to 4 applied airlines', async function () {
@@ -68,11 +70,23 @@ it('Paid airline can approve up to 4 applied airlines', async function () {
     await config.flightSuretyApp.approveAirlineRegistration(thirdAirline, { from: firstAirline });
     await config.flightSuretyApp.approveAirlineRegistration(fourthAirline, { from: firstAirline });
 
-    const approvedState = 2;
+    const registeredState = 1;
 
-    assert.equal(await config.flightSuretyApp.getAirlineState(secondAirline), approvedState, "2nd registered airline is of incorrect state");
-    assert.equal(await config.flightSuretyApp.getAirlineState(thirdAirline), approvedState, "3rd registered airline is of incorrect state");
-    assert.equal(await config.flightSuretyApp.getAirlineState(fourthAirline), approvedState, "4th registered airline is of incorrect state");
+    assert.equal(await config.flightSuretyApp.getAirlineState(secondAirline), registeredState, "2nd registered airline is of incorrect state");
+    assert.equal(await config.flightSuretyApp.getAirlineState(thirdAirline), registeredState, "3rd registered airline is of incorrect state");
+    assert.equal(await config.flightSuretyApp.getAirlineState(fourthAirline), registeredState, "4th registered airline is of incorrect state");
+});
+
+it('Registered airlines can pay dues', async function () {
+    await config.flightSuretyApp.payAirlineDues({ from: secondAirline, value: web3.utils.toWei('10', 'ether') });
+    await config.flightSuretyApp.payAirlineDues({ from: thirdAirline, value: web3.utils.toWei('10', 'ether') });
+    await config.flightSuretyApp.payAirlineDues({ from: fourthAirline, value: web3.utils.toWei('10', 'ether') });
+
+    const paidState = 2;
+
+    assert.equal(await config.flightSuretyApp.getAirlineState(secondAirline), paidState, "2nd paid airline is of incorrect state");
+    assert.equal(await config.flightSuretyApp.getAirlineState(thirdAirline), paidState, "3rd paid airline is of incorrect state");
+    assert.equal(await config.flightSuretyApp.getAirlineState(fourthAirline), paidState, "4th paid airline is of incorrect state");
 });
 
 it('Paid airline cannot approve a fifth airline alone', async function () {
@@ -80,8 +94,7 @@ it('Paid airline cannot approve a fifth airline alone', async function () {
         await config.flightSuretyApp.approveAirlineRegistration(fifthAirline, { from: firstAirline });
     } catch (err) {}
 
-    // @todo: come back to this after payment
-    //assert.equal(await config.flightSuretyApp.getAirlineState(fifthAirline), 0, "Airline is of incorrect state");
+    assert.equal(await config.flightSuretyApp.getAirlineState(fifthAirline), 0, "Single airline should not be able to approve a fifth airline alone");
 });
 
 

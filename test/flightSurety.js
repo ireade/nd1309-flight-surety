@@ -49,6 +49,10 @@ it('flightSuretyApp is authorised to make calls to flightSuretyData', async func
 /* Airlines                                                                             */
 /****************************************************************************************/
 
+it('Contract owner is created as first airline', async function () {
+    assert.equal(await config.flightSuretyData.getAirlineState(firstAirline), 2, "First airline");
+});
+
 it('Airlines can apply for registration', async function () {
     await config.flightSuretyApp.applyForAirlineRegistration("Second Airline", { from: secondAirline });
     await config.flightSuretyApp.applyForAirlineRegistration("Third Airline", { from: thirdAirline });
@@ -59,10 +63,10 @@ it('Airlines can apply for registration', async function () {
 
     const appliedState = 0;
 
-    assert.equal(await config.flightSuretyApp.getAirlineState(secondAirline), appliedState, "2nd applied airline is of incorrect state");
-    assert.equal(await config.flightSuretyApp.getAirlineState(thirdAirline), appliedState, "3rd applied airline is of incorrect state");
-    assert.equal(await config.flightSuretyApp.getAirlineState(fourthAirline), appliedState, "4th applied airline is of incorrect state");
-    assert.equal(await config.flightSuretyApp.getAirlineState(fifthAirline), appliedState, "5th applied airline is of incorrect state");
+    assert.equal(await config.flightSuretyData.getAirlineState(secondAirline), appliedState, "2nd applied airline is of incorrect state");
+    assert.equal(await config.flightSuretyData.getAirlineState(thirdAirline), appliedState, "3rd applied airline is of incorrect state");
+    assert.equal(await config.flightSuretyData.getAirlineState(fourthAirline), appliedState, "4th applied airline is of incorrect state");
+    assert.equal(await config.flightSuretyData.getAirlineState(fifthAirline), appliedState, "5th applied airline is of incorrect state");
 });
 
 it('Paid airline can approve up to 4 applied airlines', async function () {
@@ -72,9 +76,9 @@ it('Paid airline can approve up to 4 applied airlines', async function () {
 
     const registeredState = 1;
 
-    assert.equal(await config.flightSuretyApp.getAirlineState(secondAirline), registeredState, "2nd registered airline is of incorrect state");
-    assert.equal(await config.flightSuretyApp.getAirlineState(thirdAirline), registeredState, "3rd registered airline is of incorrect state");
-    assert.equal(await config.flightSuretyApp.getAirlineState(fourthAirline), registeredState, "4th registered airline is of incorrect state");
+    assert.equal(await config.flightSuretyData.getAirlineState(secondAirline), registeredState, "2nd registered airline is of incorrect state");
+    assert.equal(await config.flightSuretyData.getAirlineState(thirdAirline), registeredState, "3rd registered airline is of incorrect state");
+    assert.equal(await config.flightSuretyData.getAirlineState(fourthAirline), registeredState, "4th registered airline is of incorrect state");
 });
 
 it('Registered airlines can pay dues', async function () {
@@ -84,9 +88,14 @@ it('Registered airlines can pay dues', async function () {
 
     const paidState = 2;
 
-    assert.equal(await config.flightSuretyApp.getAirlineState(secondAirline), paidState, "2nd paid airline is of incorrect state");
-    assert.equal(await config.flightSuretyApp.getAirlineState(thirdAirline), paidState, "3rd paid airline is of incorrect state");
-    assert.equal(await config.flightSuretyApp.getAirlineState(fourthAirline), paidState, "4th paid airline is of incorrect state");
+    assert.equal(await config.flightSuretyData.getAirlineState(secondAirline), paidState, "2nd paid airline is of incorrect state");
+    assert.equal(await config.flightSuretyData.getAirlineState(thirdAirline), paidState, "3rd paid airline is of incorrect state");
+    assert.equal(await config.flightSuretyData.getAirlineState(fourthAirline), paidState, "4th paid airline is of incorrect state");
+
+    const balance = await web3.eth.getBalance(config.flightSuretyData.address);
+    const balanceEther = web3.utils.fromWei(balance, 'ether');
+
+    assert.equal(balanceEther, 30, "Balance wasn't transferred");
 });
 
 it('Multiparty consensus required to approve fifth airline', async function () {
@@ -96,12 +105,16 @@ it('Multiparty consensus required to approve fifth airline', async function () {
     try {
         await config.flightSuretyApp.approveAirlineRegistration(fifthAirline, { from: firstAirline });
     } catch (err) {}
-    assert.equal(await config.flightSuretyApp.getAirlineState(fifthAirline), 0, "Single airline should not be able to approve a fifth airline alone");
+    assert.equal(await config.flightSuretyData.getAirlineState(fifthAirline), 0, "Single airline should not be able to approve a fifth airline alone");
 
     // Second approval should pass
     await config.flightSuretyApp.approveAirlineRegistration(fifthAirline, { from: secondAirline });
-    assert.equal(await config.flightSuretyApp.getAirlineState(fifthAirline), 1, "5th registered airline is of incorrect state");
+    assert.equal(await config.flightSuretyData.getAirlineState(fifthAirline), 1, "5th registered airline is of incorrect state");
 });
+
+
+// *******************
+
 
 
 //

@@ -20,6 +20,7 @@ contract FlightSuretyApp {
     bool private operational = true;
 
     FlightSuretyData flightSuretyData;
+    address flightSuretyDataContractAddress;
 
     // Flight
 
@@ -33,26 +34,6 @@ contract FlightSuretyApp {
     mapping(bytes32 => Flight) private flights;
 
     // Airline
-
-    enum AirlineState {
-        Applied,
-        Registered,
-        Paid
-    }
-
-    struct Airline {
-        address airlineAddress;
-        AirlineState state;
-        string name;
-
-        // Approvals
-        mapping(address => bool) approvals;
-        uint8 approvalCount;
-    }
-
-    mapping(address => Airline) private airlines;
-
-    uint256 private totalPaidAirlines = 0;
 
     uint8 private constant NO_AIRLINES_REQUIRED_FOR_CONSENSUS_VOTING = 4;
 
@@ -82,13 +63,13 @@ contract FlightSuretyApp {
 
     modifier onlyRegisteredAirlines()
     {
-        require(airlines[msg.sender].state == AirlineState.Registered, "Only registered allowed");
+        require(flightSuretyData.getAirlineState(msg.sender) == 1, "Only registered allowed");
         _;
     }
 
     modifier onlyPaidAirlines()
     {
-        require(airlines[msg.sender].state == AirlineState.Paid, "Only paid airlines allowed");
+        require(flightSuretyData.getAirlineState(msg.sender) == 2, "Only paid airlines allowed");
         _;
     }
 
@@ -96,14 +77,12 @@ contract FlightSuretyApp {
     /*                                       CONSTRUCTOR                                        */
     /********************************************************************************************/
 
-    constructor(address flightSuretyDataContractAddress) public
+    constructor(address dataContractAddress) public
     {
         contractOwner = msg.sender;
-        flightSuretyData = FlightSuretyData(flightSuretyDataContractAddress);
 
-        // @todo: Change to Registered and wait for payment
-        airlines[msg.sender] = Airline(msg.sender, AirlineState.Paid, "First Airline", 0);
-        totalPaidAirlines++;
+        flightSuretyDataContractAddress = dataContractAddress;
+        flightSuretyData = FlightSuretyData(flightSuretyDataContractAddress);
     }
 
     /********************************************************************************************/
@@ -127,61 +106,41 @@ contract FlightSuretyApp {
 
     /* Airline flow ********************** */
 
-    function getAirlineState(address airline) external view returns (AirlineState)
-    {
-        return airlines[airline].state;
-    }
-
     function applyForAirlineRegistration(string airlineName) external
     {
-        require(airlines[msg.sender].airlineAddress == address(0), "Airline already in queue");
+        flightSuretyData.createAirline(msg.sender, 0, airlineName);
 
-        airlines[msg.sender] = Airline(
-                msg.sender,
-                AirlineState.Applied,
-                airlineName,
-                0
-        );
-
-        // todo: Event: New airline application
+        // @todo emit event
     }
 
-    function approveAirlineRegistration(address airline) external onlyPaidAirlines returns(bool approved)
+    function approveAirlineRegistration(address airline) external onlyPaidAirlines
     {
-        require(airlines[airline].state == AirlineState.Applied, "This airline hasn't applied for approval");
+        require(flightSuretyData.getAirlineState(airline) == 0, "This airline hasn't applied for approval");
 
-        approved = false;
+        bool approved = false;
+        uint256 totalPaidAirlines = flightSuretyData.getTotalPaidAirlines();
 
         if (totalPaidAirlines < NO_AIRLINES_REQUIRED_FOR_CONSENSUS_VOTING) {
-
             approved = true;
-
         } else {
-
-            require(!airlines[airline].approvals[msg.sender], "Caller has already given approval");
-
-            airlines[airline].approvals[msg.sender] = true;
-            airlines[airline].approvalCount++;
-
-            uint256 approvalsRequired = totalPaidAirlines / 2; // @todo: use SafeMath
-            if (airlines[airline].approvalCount >= approvalsRequired) approved = true;
+            uint8 approvalCount = flightSuretyData.approveAirlineRegistration(airline, msg.sender);
+            uint256 approvalsRequired = totalPaidAirlines / 2;
+            if (approvalCount >= approvalsRequired) approved = true;
         }
 
         if (approved) {
-            airlines[airline].state = AirlineState.Registered;
+            flightSuretyData.updateAirlineState(airline, 1);
+            // @todo emit event
         }
-
-        // todo: emit event is approved is true
-
-        return approved;
     }
 
     function payAirlineDues() external payable onlyRegisteredAirlines
     {
         require(msg.value == 10 ether, "Payment of 10 ether is required");
 
-        airlines[msg.sender].state = AirlineState.Paid;
-        totalPaidAirlines++;
+        flightSuretyDataContractAddress.transfer(msg.value);
+
+        flightSuretyData.updateAirlineState(msg.sender, 2);
 
         // @todo: emit paid event
     }
@@ -425,5 +384,20 @@ contract FlightSuretyApp {
 /********************************************************************************************/
 
 contract FlightSuretyData {
+
+    function getAirlineState(address airline) view returns(uint)
+    {}
+
+    function createAirline(address airlineAddress, uint8 state, string name) view
+    {}
+
+    function updateAirlineState(address airlineAddress, uint8 state) view
+    {}
+
+    function getTotalPaidAirlines() view returns(uint)
+    {}
+
+    function approveAirlineRegistration(address airline, address approver) view returns (uint8)
+    {}
 
 }

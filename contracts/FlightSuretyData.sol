@@ -11,8 +11,28 @@ contract FlightSuretyData {
 
     address private contractOwner;
     bool private operational = true;
-
     mapping(address => bool) private authorizedCallers;
+
+    /* Airlines */
+
+    enum AirlineState {
+        Applied,
+        Registered,
+        Paid
+    }
+
+    struct Airline {
+        address airlineAddress;
+        AirlineState state;
+        string name;
+
+        mapping(address => bool) approvals;
+        uint8 approvalCount;
+    }
+
+    mapping(address => Airline) internal airlines;
+    uint256 internal totalPaidAirlines = 0;
+
 
 
     /********************************************************************************************/
@@ -40,7 +60,7 @@ contract FlightSuretyData {
 
     modifier requireCallerAuthorized()
     {
-        require(authorizedCallers[msg.sender] == true, "Caller is not authorised");
+        require((msg.sender == contractOwner) || authorizedCallers[msg.sender], "Caller is not authorised");
         _;
     }
 
@@ -51,6 +71,9 @@ contract FlightSuretyData {
     constructor() public
     {
         contractOwner = msg.sender;
+
+        airlines[contractOwner] = Airline(contractOwner, AirlineState.Paid, "First Airline", 0);
+        totalPaidAirlines++;
     }
 
     /********************************************************************************************/
@@ -81,19 +104,61 @@ contract FlightSuretyData {
     /*                                     SMART CONTRACT FUNCTIONS                             */
     /********************************************************************************************/
 
-    /**
-     * todo Add an airline to the registration queue
-     *      Can only be called from FlightSuretyApp contract
-     *
-     */
-    function registerAirline
-    (
-    )
+    /* Airlines */
+
+    function getAirlineState(address airline)
+    external
+    view
+    requireCallerAuthorized
+    returns (AirlineState)
+    {
+        return airlines[airline].state;
+    }
+
+    function createAirline(address airlineAddress, uint8 state, string name)
     external
     requireCallerAuthorized
     {
-        // need to return
+        airlines[airlineAddress] = Airline(airlineAddress, AirlineState(state), name, 0);
+
+
     }
+
+    function updateAirlineState(address airlineAddress, uint8 state)
+    external
+    requireCallerAuthorized
+    {
+        airlines[airlineAddress].state = AirlineState(state);
+        if (state == 2) totalPaidAirlines++;
+    }
+
+    function getTotalPaidAirlines()
+    external
+    view
+    requireCallerAuthorized
+    returns (uint256)
+    {
+        return totalPaidAirlines;
+    }
+
+    function approveAirlineRegistration(address airline, address approver)
+    external
+    requireCallerAuthorized
+    returns (uint8)
+    {
+        require(!airlines[airline].approvals[approver], "Caller has already given approval");
+
+        airlines[airline].approvals[approver] = true;
+        airlines[airline].approvalCount++;
+
+        return airlines[airline].approvalCount;
+    }
+
+
+
+    /********************************************************************************************/
+    /*                                     SMART CONTRACT FUNCTIONS                             */
+    /********************************************************************************************/
 
 
     /**
@@ -133,18 +198,6 @@ contract FlightSuretyData {
     {
     }
 
-    /**
-     * @dev Initial funding for the insurance. Unless there are too many delayed flights
-     *      resulting in insurance payouts, the contract should be self-sustaining
-     *
-     */
-    function fund
-    (
-    )
-    public
-    payable
-    {
-    }
 
     function getFlightKey
     (
@@ -167,7 +220,7 @@ contract FlightSuretyData {
     external
     payable
     {
-        fund();
+        // @todo: move fallback function to app
     }
 
 

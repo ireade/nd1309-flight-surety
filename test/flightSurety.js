@@ -113,25 +113,20 @@ it('Multiparty consensus required to approve fifth airline', async function () {
 });
 
 
-// *******************
+/****************************************************************************************/
+/* Flights                                                                              */
+/****************************************************************************************/
 
+it('Airline can register new flight', async function () {
+    // Note: Based on 4 paid airlines
 
+    // First approval should fail
+    try {
+        await config.flightSuretyApp.approveAirlineRegistration(fifthAirline, { from: firstAirline });
+    } catch (err) {}
+    assert.equal(await config.flightSuretyData.getAirlineState(fifthAirline), 0, "Single airline should not be able to approve a fifth airline alone");
 
-//
-// it('(airline) cannot register an Airline using registerAirline() if it is not funded', async () => {
-//
-//     // ARRANGE
-//     let newAirline = accounts[2];
-//
-//     // ACT
-//     try {
-//         await config.flightSuretyApp.registerAirline(newAirline, {from: config.firstAirline});
-//     } catch (e) {
-//
-//     }
-//     let result = await config.flightSuretyData.isAirline.call(newAirline);
-//
-//     // ASSERT
-//     assert.equal(result, false, "Airline should not be able to register another airline if it hasn't provided funding");
-//
-// });
+    // Second approval should pass
+    await config.flightSuretyApp.approveAirlineRegistration(fifthAirline, { from: secondAirline });
+    assert.equal(await config.flightSuretyData.getAirlineState(fifthAirline), 1, "5th registered airline is of incorrect state");
+});

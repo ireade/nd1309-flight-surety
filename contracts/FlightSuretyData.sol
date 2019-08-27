@@ -13,6 +13,7 @@ contract FlightSuretyData {
     bool private operational = true;
     mapping(address => bool) private authorizedCallers;
 
+
     /* Airlines */
 
     enum AirlineState {
@@ -33,6 +34,22 @@ contract FlightSuretyData {
     mapping(address => Airline) internal airlines;
     uint256 internal totalPaidAirlines = 0;
 
+
+    /* Passenger Insurance */
+
+    enum InsuranceState {
+        Bought,
+        Claimed
+    }
+
+    struct Insurance {
+        bytes32 flight;
+        uint256 amount;
+        InsuranceState state;
+    }
+
+    mapping(address => mapping(bytes32 => Insurance)) passengerInsurances;
+    mapping(address => uint256) passengerBalances;
 
 
     /********************************************************************************************/
@@ -120,8 +137,6 @@ contract FlightSuretyData {
     requireCallerAuthorized
     {
         airlines[airlineAddress] = Airline(airlineAddress, AirlineState(state), name, 0);
-
-
     }
 
     function updateAirlineState(address airlineAddress, uint8 state)
@@ -155,48 +170,55 @@ contract FlightSuretyData {
     }
 
 
+    /* Passenger Insurance */
+
+    function getInsuranceState(address passenger, bytes32 flight)
+    external
+    requireCallerAuthorized
+    returns (InsuranceState)
+    {
+        return passengerInsurances[passenger][flight].state;
+    }
+
+    function createInsurance(address passenger, bytes32 flight, uint256 amount)
+    external
+    requireCallerAuthorized
+    {
+
+        // @todo: Make sure doesn't already exist;
+
+        passengerInsurances[passenger][flight] = Insurance(flight, amount, InsuranceState.Bought);
+    }
+
+    function claimInsurance(address passenger, bytes32 flight)
+    external
+    requireCallerAuthorized
+    {
+        passengerInsurances[passenger][flight].state = InsuranceState.Claimed;
+    }
+
+    function creditPassengerBalance(address passenger, uint256 amount)
+    external
+    requireCallerAuthorized
+    {
+        passengerBalances[passenger] = passengerBalances[passenger] + amount;
+    }
+
+    function payPassenger(address passenger, uint256 amount)
+    external
+    requireCallerAuthorized
+    {
+        require(passengerBalances[passenger] >= amount, "Passenger doesn't have enough to withdraw that amount");
+
+        passengerBalances[passenger] = passengerBalances[passenger] - amount;
+
+        passenger.transfer(amount);
+    }
+
 
     /********************************************************************************************/
     /*                                     SMART CONTRACT FUNCTIONS                             */
     /********************************************************************************************/
-
-
-    /**
-     * @dev Buy insurance for a flight
-     *
-     */
-    function buyInsurance
-    (
-    )
-    external
-    payable
-    {
-
-    }
-
-    /**
-     *  @dev Credits payouts to insurees
-    */
-    function creditInsurees
-    (
-    )
-    external
-    pure
-    {
-    }
-
-
-    /**
-     *  @dev Transfers eligible payout funds to insuree
-     *
-    */
-    function payInsuree
-    (
-    )
-    external
-    pure
-    {
-    }
 
 
     function getFlightKey

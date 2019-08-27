@@ -12,7 +12,7 @@ let flightSuretyApp = new web3.eth.Contract(FlightSuretyApp.abi, config.appAddre
 
 flightSuretyApp.events.OracleRequest({
     fromBlock: 0
-  }, function (error, event) {
+}, function (error, event) {
     if (error) console.log(error)
     console.log(event)
 });
@@ -20,7 +20,7 @@ flightSuretyApp.events.OracleRequest({
 const app = express();
 app.get('/api', (req, res) => {
     res.send({
-      message: 'An API for use with your Dapp!'
+        message: 'An API for use with your Dapp!'
     })
 })
 

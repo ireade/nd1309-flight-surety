@@ -9,13 +9,6 @@ contract FlightSuretyApp {
     /*                                       DATA VARIABLES                                     */
     /********************************************************************************************/
 
-    uint8 private constant STATUS_CODE_UNKNOWN = 0;
-    uint8 private constant STATUS_CODE_ON_TIME = 10;
-    uint8 private constant STATUS_CODE_LATE_AIRLINE = 20; // only code that results in payout
-    uint8 private constant STATUS_CODE_LATE_WEATHER = 30;
-    uint8 private constant STATUS_CODE_LATE_TECHNICAL = 40;
-    uint8 private constant STATUS_CODE_LATE_OTHER = 50;
-
     address private contractOwner;
     bool private operational = true;
 
@@ -24,11 +17,18 @@ contract FlightSuretyApp {
 
     // Flight
 
+    uint8 private constant STATUS_CODE_UNKNOWN = 0;
+    uint8 private constant STATUS_CODE_ON_TIME = 10;
+    uint8 private constant STATUS_CODE_LATE_AIRLINE = 20; // only code that results in payout
+    uint8 private constant STATUS_CODE_LATE_WEATHER = 30;
+    uint8 private constant STATUS_CODE_LATE_TECHNICAL = 40;
+    uint8 private constant STATUS_CODE_LATE_OTHER = 50;
+
     struct Flight {
-        bool isRegistered;
         uint8 statusCode;
         uint256 updatedTimestamp;
         address airline;
+        string code;
     }
 
     mapping(bytes32 => Flight) private flights;
@@ -83,6 +83,12 @@ contract FlightSuretyApp {
 
         flightSuretyDataContractAddress = dataContractAddress;
         flightSuretyData = FlightSuretyData(flightSuretyDataContractAddress);
+
+        // @todo: fix?
+        for(var i = 0; i < 3; i++) {
+            bytes32 flightKey = getFlightKey(msg.sender, i, now);
+            flights[flightKey] = Flight(20, now, msg.sender, i);
+        }
     }
 
     /********************************************************************************************/
@@ -146,20 +152,41 @@ contract FlightSuretyApp {
     }
 
 
+    /* Passenger flow ********************** */
+
+    function purchaseInsurance(bytes32 flight) external payable
+    {
+        // @todo: make sure flight exists
+
+        require(msg.value <= 1 ether, "Passengers can buy a maximum of 1 ether for insurance");
+
+        flightSuretyDataContractAddress.transfer(msg.value);
+
+        flightSuretyData.createInsurance(msg.sender, flight, msg.value);
+    }
+
+    function claimInsurance(bytes32 flight) external
+    {
+        // @todo: fetchFlightStatus
+
+        // @todo: call creditInsuree
+    }
+
+
     /* Flights flow ********************** */
 
-
-    /**
-     * @dev Register a future flight for insuring.
-     *
-     */
-    function registerFlight
-    (
-    )
+    function registerFlight(uint8 status, string code)
     external
-    pure
+    onlyPaidAirlines
     {
-        // not necessary, could have list of flights hard-coded
+        bytes32 flightKey = getFlightKey(msg.sender, code, now);
+
+        flights[flightKey] = Flight(status, now, msg.sender, code);
+    }
+
+    function getFlightStatus(bytes32 flight) public view returns(uint8)
+    {
+        return flights[flightKey].status;
     }
 
     /**
@@ -386,7 +413,9 @@ contract FlightSuretyApp {
 contract FlightSuretyData {
 
     function getAirlineState(address airline) view returns(uint)
-    {}
+    {
+        return 1;
+    }
 
     function createAirline(address airlineAddress, uint8 state, string name) view
     {}
@@ -395,9 +424,18 @@ contract FlightSuretyData {
     {}
 
     function getTotalPaidAirlines() view returns(uint)
-    {}
+    {
+        return 1;
+    }
 
     function approveAirlineRegistration(address airline, address approver) view returns (uint8)
+    {
+        return 1;
+    }
+
+    ///
+
+    function createInsurance(address passenger, bytes32 flight, uint256 amount)
     {}
 
 }

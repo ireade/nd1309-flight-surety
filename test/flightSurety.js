@@ -89,12 +89,18 @@ it('Registered airlines can pay dues', async function () {
     assert.equal(await config.flightSuretyApp.getAirlineState(fourthAirline), paidState, "4th paid airline is of incorrect state");
 });
 
-it('Paid airline cannot approve a fifth airline alone', async function () {
+it('Multiparty consensus required to approve fifth airline', async function () {
+    // Note: Based on 4 paid airlines
+
+    // First approval should fail
     try {
         await config.flightSuretyApp.approveAirlineRegistration(fifthAirline, { from: firstAirline });
     } catch (err) {}
-
     assert.equal(await config.flightSuretyApp.getAirlineState(fifthAirline), 0, "Single airline should not be able to approve a fifth airline alone");
+
+    // Second approval should pass
+    await config.flightSuretyApp.approveAirlineRegistration(fifthAirline, { from: secondAirline });
+    assert.equal(await config.flightSuretyApp.getAirlineState(fifthAirline), 1, "5th registered airline is of incorrect state");
 });
 
 

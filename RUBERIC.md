@@ -13,10 +13,10 @@ https://review.udacity.com/#!/rubrics/1711/view
 
 ## Airlines
 
-- [ ] First airline is registered when contract is deployed.
-- [ ] Only existing airline may register a new airline until there are at least four airlines registered (+ test)
+- [x] First airline is registered when contract is deployed.
+- [x] Only existing airline may register a new airline until there are at least four airlines registered (+ test)
 - [ ] Registration of fifth and subsequent airlines requires multi-party consensus of 50% of registered airlines (+ test)
-- [ ] Airline can be registered, but does not participate in contract until it submits funding of 10 ether (+ test)
+- [x] Airline can be registered, but does not participate in contract until it submits funding of 10 ether (+ test)
 
 
 ## Passengers

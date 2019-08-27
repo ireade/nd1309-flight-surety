@@ -52,7 +52,7 @@ contract FlightSuretyApp {
 
     mapping(address => Airline) private airlines;
 
-    uint private totalPaidAirlines = 0;
+    uint256 private totalPaidAirlines = 0;
 
     uint8 private constant NO_AIRLINES_REQUIRED_FOR_CONSENSUS_VOTING = 4;
 
@@ -163,9 +163,8 @@ contract FlightSuretyApp {
             airlines[airline].approvals[msg.sender] = true;
             airlines[airline].approvalCount++;
 
-            // @todo: calculate number of approvals required
-
-            if (airlines[airline].approvalCount == 3) approved = true;
+            uint256 approvalsRequired = totalPaidAirlines / 2; // @todo: use SafeMath
+            if (airlines[airline].approvalCount >= approvalsRequired) approved = true;
         }
 
         if (approved) {

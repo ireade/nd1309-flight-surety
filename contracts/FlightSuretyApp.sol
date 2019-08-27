@@ -21,6 +21,8 @@ contract FlightSuretyApp {
 
     FlightSuretyData flightSuretyData;
 
+    // Flight
+
     struct Flight {
         bool isRegistered;
         uint8 statusCode;
@@ -29,6 +31,26 @@ contract FlightSuretyApp {
     }
 
     mapping(bytes32 => Flight) private flights;
+
+    // Airline
+
+    enum AirlineState {
+        Applied,
+        Registered,
+        Paid
+    }
+
+    struct Airline {
+        address airlineAddress;
+        AirlineState state;
+        string name;
+    }
+
+    mapping(address => Airline) private airlines;
+
+    uint private totalPaidAirlines = 0;
+
+    uint8 private constant NO_AIRLINES_REQUIRED_FOR_CONSENSUS_VOTING = 5;
 
 
     /********************************************************************************************/
@@ -54,6 +76,12 @@ contract FlightSuretyApp {
         _;
     }
 
+    modifier onlyPaidAirlines()
+    {
+        require(airlines[msg.sender].state == AirlineState.Paid, "Only fully paid airline allowed");
+        _;
+    }
+
     /********************************************************************************************/
     /*                                       CONSTRUCTOR                                        */
     /********************************************************************************************/
@@ -62,6 +90,10 @@ contract FlightSuretyApp {
     {
         contractOwner = msg.sender;
         flightSuretyData = FlightSuretyData(flightSuretyDataContractAddress);
+
+        // todo: register first airline
+        //airlines[msg.sender] = Airline(msg.sender, AirlineState.Paid, "First Airline");
+        //totalPaidAirlines++;
     }
 
     /********************************************************************************************/
@@ -83,20 +115,48 @@ contract FlightSuretyApp {
     /*                                     SMART CONTRACT FUNCTIONS                             */
     /********************************************************************************************/
 
+    /* Airline flow ********************** */
 
-    /**
-     * @dev Add an airline to the registration queue
-     *
-     */
-    function registerAirline
-    (
-    )
-    external
-    pure
-    returns (bool success, uint256 votes)
+    function applyForAirlineRegistration(string airlineName) external
     {
-        return (success, 0);
+        require(airlines[msg.sender].airlineAddress == address(0), "Airline already in queue");
+
+        airlines[msg.sender] = Airline(msg.sender, AirlineState.Applied, airlineName);
+
+        // todo: Event: New airline application
     }
+
+    function approveAirlineRegistration(address airline) external onlyPaidAirlines returns(bool approved)
+    {
+        require(airlines[airline].state == AirlineState.Applied, "This airline hasn't applied for approval");
+
+        approved = false;
+
+        if (totalPaidAirlines < NO_AIRLINES_REQUIRED_FOR_CONSENSUS_VOTING) {
+            approved = true;
+        } else {
+            // Consensus
+        }
+
+        // todo: emit event is approved is true
+
+        if (approved) airlines[airline].state = AirlineState.Registered;
+        return approved;
+    }
+
+    function payAirlineDues
+    (
+
+    )
+    payable
+    {
+
+        // increment totalPaidAirlines
+
+    }
+
+
+    /* Flights flow ********************** */
 
 
     /**

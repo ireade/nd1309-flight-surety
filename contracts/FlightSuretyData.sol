@@ -12,14 +12,14 @@ contract FlightSuretyData {
     address private contractOwner;
     bool private operational = true;
 
-    mapping(address => bool) private authorizedAppContracts;
+    mapping(address => bool) private authorizedCallers;
 
 
     /********************************************************************************************/
     /*                                       EVENT DEFINITIONS                                  */
     /********************************************************************************************/
 
-    // @todo
+    // todo
 
 
     /********************************************************************************************/
@@ -40,7 +40,7 @@ contract FlightSuretyData {
 
     modifier requireCallerAuthorized()
     {
-        require(authorizedAppContracts[msg.sender] == true, "Caller is not authorised");
+        require(authorizedCallers[msg.sender] == true, "Caller is not authorised");
         _;
     }
 
@@ -67,9 +67,14 @@ contract FlightSuretyData {
         operational = mode;
     }
 
-    function setAppContractAuthorizationStatus(address appContract, bool status) external requireContractOwner
+    function setCallerAuthorizationStatus(address caller, bool status) external requireContractOwner
     {
-        authorizedAppContracts[appContract] = status;
+        authorizedCallers[caller] = status;
+    }
+
+    function getCallerAuthorizationStatus(address caller) public view requireContractOwner returns (bool)
+    {
+        return authorizedCallers[caller] || false;
     }
 
     /********************************************************************************************/
@@ -77,7 +82,7 @@ contract FlightSuretyData {
     /********************************************************************************************/
 
     /**
-     * @dev Add an airline to the registration queue
+     * todo Add an airline to the registration queue
      *      Can only be called from FlightSuretyApp contract
      *
      */
@@ -85,8 +90,9 @@ contract FlightSuretyData {
     (
     )
     external
-    pure
+    requireCallerAuthorized
     {
+        // need to return
     }
 
 

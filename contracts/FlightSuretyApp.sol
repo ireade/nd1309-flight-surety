@@ -222,6 +222,21 @@ contract FlightSuretyApp {
         emit OracleRequest(index, flight.airline, flight.flight, flight.updatedTimestamp);
     }
 
+    function fetchFlightStatusWithoutKey(address airline, string flight, uint256 timestamp)
+    external
+    {
+        uint8 index = getRandomIndex(msg.sender);
+
+        bytes32 key = keccak256(abi.encodePacked(index, airline, flight, timestamp));
+
+        oracleResponses[key] = ResponseInfo({
+            requester : msg.sender,
+            isOpen : true
+            });
+
+        emit OracleRequest(index, airline, flight, timestamp);
+    }
+
 
     /********************************************************************************************/
     /*                                     ORACLE MANAGEMENT                                    */

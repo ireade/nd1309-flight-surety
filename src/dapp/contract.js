@@ -29,7 +29,7 @@ export default class Contract {
                 this.passengers.push(accts[counter++]);
             }
 
-            callback();
+            callback(this);
         });
     }
 

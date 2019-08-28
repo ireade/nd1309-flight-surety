@@ -7,7 +7,7 @@ https://review.udacity.com/#!/rubrics/1711/view
 - [x] Smart Contract Separation
 - [ ] Dapp Created and Used for Contract Calls
 - [ ] Oracle Server Application
-- [ ] Operational status control is implemented in contracts
+- [x] Operational status control is implemented in contracts
 - [x] Contract functions “fail fast” by having a majority of “require()” calls at the beginning of function body
 
 

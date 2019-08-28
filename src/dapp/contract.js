@@ -4,6 +4,7 @@ import Config from './config.json';
 import Web3 from 'web3';
 
 export default class Contract {
+
     constructor(network, callback) {
 
         this.config = Config[network];
@@ -15,8 +16,6 @@ export default class Contract {
         this.initialize(callback);
 
         this.owner = null;
-        this.airlines = [];
-        this.passengers = [];
     }
 
     initialize(callback) {
@@ -25,21 +24,30 @@ export default class Contract {
            
             self.owner = accounts[0];
 
+
             // Authorize contract
+
             self.flightSuretyData.methods
                 .setCallerAuthorizationStatus(self.config.appAddress, true)
-                .call({ from: self.owner }, () => {
+                .call({ from: self.owner }, (err, res) => {
+
+                    console.log(res);
+
 
                     self.flightSuretyData.methods
                         .getCallerAuthorizationStatus(self.config.appAddress)
                         .call({ from: self.owner }, (err, status) => {
 
-                            callback(status);
-                        });
+                            console.log(status)
 
-                });
+                            // @todo: change back
+                            callback(true);
+                        }); // end getCallerAuthorizationStatus()
+
+                }); // end setCallerAuthorizationStatus()
         });
     }
+
 
     isOperational(callback) {
        let self = this;
@@ -73,17 +81,12 @@ export default class Contract {
             )
     }
 
-    fetchFlightStatus(flight, callback) {
+    fetchFlightStatus(airline, flight, timestamp, callback) {
         let self = this;
-        let payload = {
-            airline: self.airlines[0],
-            flight: flight,
-            timestamp: Math.floor(Date.now() / 1000)
-        } 
         self.flightSuretyApp.methods
-            .fetchFlightStatus(payload.airline, payload.flight, payload.timestamp)
+            .fetchFlightStatus(airline, flight, timestamp)
             .send({ from: self.owner}, (error, result) => {
-                callback(error, payload);
+                callback(error, result);
             });
     }
 }

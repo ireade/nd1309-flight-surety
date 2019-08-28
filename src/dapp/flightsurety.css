@@ -116,6 +116,12 @@ section {
 
 }
 
+#display-wrapper > div:not(:first-child) {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px dashed rgb(200,200,200);
+}
+
 
 /* Form */
 

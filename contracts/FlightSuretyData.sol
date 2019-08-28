@@ -31,7 +31,7 @@ contract FlightSuretyData {
 
     modifier requireCallerAuthorized()
     {
-        require((msg.sender == contractOwner) || authorizedCallers[msg.sender], "Caller is not authorised");
+        require(authorizedCallers[msg.sender] || (msg.sender == contractOwner), "Caller is not authorised");
         _;
     }
 
@@ -40,7 +40,8 @@ contract FlightSuretyData {
     /*                           CONSTRUCTOR & UTILITY FUNCTIONS                                */
     /********************************************************************************************/
 
-    constructor() public
+    constructor()
+    public
     {
         contractOwner = msg.sender;
 
@@ -55,7 +56,10 @@ contract FlightSuretyData {
         // @todo: move fallback function to app
     }
 
-    function isOperational() public view returns (bool)
+    function isOperational()
+    public
+    view
+    returns (bool)
     {
         return operational;
     }
@@ -65,14 +69,22 @@ contract FlightSuretyData {
         operational = mode;
     }
 
-    function setCallerAuthorizationStatus(address caller, bool status) external requireContractOwner
+    function setCallerAuthorizationStatus(address caller, bool status)
+    external
+    requireContractOwner
+    returns (bool)
     {
         authorizedCallers[caller] = status;
+        return authorizedCallers[caller];
     }
 
-    function getCallerAuthorizationStatus(address caller) public view requireContractOwner returns (bool)
+    function getCallerAuthorizationStatus(address caller)
+    public
+    view
+    requireContractOwner
+    returns (bool)
     {
-        return authorizedCallers[caller] || false;
+        return authorizedCallers[caller];
     }
 
 

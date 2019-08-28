@@ -4,12 +4,12 @@ import './flightsurety.css';
 
 (async() => {
 
-    const contract = new Contract('localhost', (status) => {
+    const contract = new Contract('localhost', (authorized) => {
 
-        if (!status) return display(
+        if (!authorized) return display(
             'App contract authorization',
             'Checks if app contract is authorized to make calls to data contract',
-            [ { label: 'Status', value: status} ]
+            [ { label: 'Status', value: authorized} ]
         );
 
         contract.isOperational((error, result) => {
@@ -21,13 +21,29 @@ import './flightsurety.css';
         });
 
         contract.getFlights((error, flights) => {
-            const select = DOM.elid('flights');
+            const purchaseInsuranceSelect = DOM.elid('purchase-insurance-flights');
+            const checkStatusSelect = DOM.elid('check-status-flights');
 
             flights.forEach((flight) => {
                 const option = document.createElement('option');
+
                 option.value = `${flight.airline}-${flight.flight}-${flight.timestamp}`;
-                option.textContent = flight.flight;
-                select.appendChild(option);
+
+                const prettyDate = new Date(flight.timestamp * 1000).toDateString();
+                option.textContent = `${flight.flight} on ${prettyDate}`;
+
+                purchaseInsuranceSelect.appendChild(option);
+            });
+
+            flights.forEach((flight) => {
+                const option = document.createElement('option');
+
+                option.value = `${flight.airline}-${flight.flight}-${flight.timestamp}`;
+
+                const prettyDate = new Date(flight.timestamp * 1000).toDateString();
+                option.textContent = `${flight.flight} on ${prettyDate}`;
+
+                checkStatusSelect.appendChild(option);
             });
         });
 
@@ -35,7 +51,7 @@ import './flightsurety.css';
         /* User events */
 
         DOM.elid('purchase-insurance').addEventListener('click', () => {
-            let flight = DOM.elid('flights').value;
+            let flight = DOM.elid('purchase-insurance-flights').value;
             flight = flight.split("-");
 
             console.log(flight);
@@ -51,14 +67,21 @@ import './flightsurety.css';
         });
 
         DOM.elid('submit-oracle').addEventListener('click', () => {
-            let flight = DOM.elid('flight-number').value;
-            contract.fetchFlightStatus(flight, (error, result) => {
-                display(
-                    'Oracles',
-                    'Trigger oracles',
-                    [ { label: 'Fetch Flight Status', error: error, value: result.flight + ' ' + result.timestamp} ]
-                );
-            });
+            let flight = DOM.elid('check-status-flights').value;
+            flight = flight.split("-");
+
+            contract.fetchFlightStatus(
+                flight[0],
+                flight[1],
+                flight[2],
+                (error, result) => {
+                    display(
+                        'Oracles',
+                        'Trigger oracles',
+                        [ { label: 'Fetch Flight Status', error: error, value: flight[1]} ]
+                    );
+                }
+            );
         })
 
     });

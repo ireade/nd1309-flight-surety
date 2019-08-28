@@ -147,7 +147,7 @@ it('Passenger can buy insurance for flight', async function () {
 
     const flightKeyList = await config.flightSuretyApp.getFlightsKeyList();
 
-    const amount = web3.utils.toWei('1', 'ether');
+    const amount = await config.flightSuretyApp.MAX_INSURANCE_AMOUNT.call();
     const flightKey = flightKeyList[0];
 
     await config.flightSuretyApp.purchaseInsurance(flightKey, {
@@ -166,7 +166,8 @@ it('Passenger cannot buy more than 1 ether of insurance', async function () {
 
     const flightKeyList = await config.flightSuretyApp.getFlightsKeyList();
 
-    const amount = web3.utils.toWei('2', 'ether');
+    let amount = await config.flightSuretyApp.MAX_INSURANCE_AMOUNT.call();
+    amount = amount + amount;
     const flightKey = flightKeyList[0];
 
     let failed = false;

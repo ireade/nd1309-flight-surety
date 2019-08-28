@@ -22,7 +22,7 @@ https://review.udacity.com/#!/rubrics/1711/view
 ## Passengers
 
 - [ ] Passengers can choose from a fixed list of flight numbers and departure that are defined in the Dapp client
-- [ ] Passengers may pay up to 1 ether for purchasing flight insurance.
+- [x] Passengers may pay up to 1 ether for purchasing flight insurance.
 - [ ] If flight is delayed due to airline fault, passenger receives credit of 1.5X the amount they paid
 - [ ] Passenger can withdraw any funds owed to them as a result of receiving credit for insurance payout
 - [ ] Insurance payouts are not sent directly to passenger’s wallet

@@ -128,6 +128,8 @@ contract FlightSuretyApp {
     /*                         PASSENGER INSURANCE FUNCTIONS                                    */
     /********************************************************************************************/
 
+    uint public constant MAX_INSURANCE_AMOUNT = 1 ether;
+
     event PassengerInsuranceBought(address passenger, bytes32 flightKey);
 
     function purchaseInsurance(bytes32 flightKey) external payable
@@ -136,7 +138,7 @@ contract FlightSuretyApp {
 
         // @todo: make sure insurance doesn't already exist
 
-        require(msg.value <= 1 ether, "Passengers can buy a maximum of 1 ether for insurance");
+        require(msg.value <= MAX_INSURANCE_AMOUNT, "Passengers can buy a maximum of 1 ether for insurance");
 
         flightSuretyDataContractAddress.transfer(msg.value);
         flightSuretyData.createInsurance(msg.sender, flightKey, msg.value);

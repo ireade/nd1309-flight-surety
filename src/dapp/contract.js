@@ -21,23 +21,23 @@ export default class Contract {
 
     initialize(callback) {
         let self = this;
-        this.web3.eth.getAccounts((error, accts) => {
+        this.web3.eth.getAccounts((error, accounts) => {
            
-            this.owner = accts[0];
+            self.owner = accounts[0];
 
-            let counter = 1;
-            
-            while(this.airlines.length < 5) {
-                this.airlines.push(accts[counter++]);
-            }
-
-            while(this.passengers.length < 5) {
-                this.passengers.push(accts[counter++]);
-            }
-
+            // Authorize contract
             self.flightSuretyData.methods
                 .setCallerAuthorizationStatus(self.config.appAddress, true)
-                .call({ from: self.owner }, callback);
+                .call({ from: self.owner }, () => {
+
+                    self.flightSuretyData.methods
+                        .getCallerAuthorizationStatus(self.config.appAddress)
+                        .call({ from: self.owner }, (err, status) => {
+
+                            callback(status);
+                        });
+
+                });
         });
     }
 

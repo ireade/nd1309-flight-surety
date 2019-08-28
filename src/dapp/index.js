@@ -4,7 +4,13 @@ import './flightsurety.css';
 
 (async() => {
 
-    const contract = new Contract('localhost', (foo) => {
+    const contract = new Contract('localhost', (status) => {
+
+        if (!status) return display(
+            'App contract authorization',
+            'Checks if app contract is authorized to make calls to data contract',
+            [ { label: 'Status', value: status} ]
+        );
 
         contract.isOperational((error, result) => {
             display(
@@ -15,7 +21,7 @@ import './flightsurety.css';
         });
 
         contract.getFlights((error, flights) => {
-            const select = DOM.elid('flight-keys');
+            const select = DOM.elid('flights');
 
             flights.forEach((flight) => {
                 const option = document.createElement('option');
@@ -29,7 +35,7 @@ import './flightsurety.css';
         /* User events */
 
         DOM.elid('purchase-insurance').addEventListener('click', () => {
-            let flight = DOM.elid('flight-keys').value;
+            let flight = DOM.elid('flights').value;
             flight = flight.split("-");
 
             console.log(flight);

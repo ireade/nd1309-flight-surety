@@ -16,6 +16,7 @@ export default class Contract {
         this.initialize(callback);
 
         this.owner = null;
+        this.passenger = null;
     }
 
     initialize(callback) {
@@ -23,25 +24,20 @@ export default class Contract {
         this.web3.eth.getAccounts((error, accounts) => {
            
             self.owner = accounts[0];
+            self.passenger = accounts[5];
 
 
             // Authorize contract
 
             self.flightSuretyData.methods
                 .setCallerAuthorizationStatus(self.config.appAddress, true)
-                .call({ from: self.owner }, (err, res) => {
-
-                    console.log(res);
-
+                .call({ from: self.owner }, () => {
 
                     self.flightSuretyData.methods
                         .getCallerAuthorizationStatus(self.config.appAddress)
                         .call({ from: self.owner }, (err, status) => {
 
-                            console.log(status)
-
-                            // @todo: change back
-                            callback(true);
+                            callback(status);
                         }); // end getCallerAuthorizationStatus()
 
                 }); // end setCallerAuthorizationStatus()
@@ -61,7 +57,7 @@ export default class Contract {
 
         self.flightSuretyApp.methods
             .getFlightsCount()
-            .call({ from: self.owner }, async (err, flightsCount) => {
+            .call({ from: self.passenger }, async (err, flightsCount) => {
                 const flights = [];
                 for (var i = 0; i < flightsCount; i++) {
                     const res = await self.flightSuretyApp.methods.getFlight(i).call({ from: self.owner });
@@ -71,12 +67,12 @@ export default class Contract {
             });
     }
 
-    purchaseInsurance(airline, flight, timestamp, callback) {
+    purchaseInsurance(airline, flight, timestamp, amount, callback) {
         let self = this;
         self.flightSuretyApp.methods
             .purchaseInsurance(airline, flight, timestamp)
             .send(
-                {from: self.owner, value: this.web3.utils.toWei('1', 'ether')},
+                {from: self.passenger, value: this.web3.utils.toWei(amount.toString(), 'ether')},
                 callback
             )
     }
@@ -85,7 +81,7 @@ export default class Contract {
         let self = this;
         self.flightSuretyApp.methods
             .fetchFlightStatus(airline, flight, timestamp)
-            .send({ from: self.owner}, (error, result) => {
+            .send({ from: self.passenger}, (error, result) => {
                 callback(error, result);
             });
     }

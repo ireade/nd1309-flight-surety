@@ -62,11 +62,11 @@ contract FlightSuretyApp {
         flights[flightKey1] = Flight(STATUS_CODE_UNKNOWN, now, contractOwner, "FLIGHT1");
         flightsKeyList.push(flightKey1);
 
-        bytes32 flightKey2 = getFlightKey(contractOwner, "FLIGHT2", now);
+        bytes32 flightKey2 = getFlightKey(contractOwner, "FLIGHT2", now + 1 days);
         flights[flightKey2] = Flight(STATUS_CODE_UNKNOWN, now + 1 days, contractOwner, "FLIGHT2");
         flightsKeyList.push(flightKey2);
 
-        bytes32 flightKey3 = getFlightKey(contractOwner, "FLIGHT3", now);
+        bytes32 flightKey3 = getFlightKey(contractOwner, "FLIGHT3", now + 2 days);
         flights[flightKey3] = Flight(STATUS_CODE_UNKNOWN, now + 2 days, contractOwner, "FLIGHT3");
         flightsKeyList.push(flightKey3);
     }

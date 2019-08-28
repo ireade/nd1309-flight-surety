@@ -26,45 +26,42 @@ import './flightsurety.css';
 
             flights.forEach((flight) => {
                 const option = document.createElement('option');
-
                 option.value = `${flight.airline}-${flight.flight}-${flight.timestamp}`;
-
                 const prettyDate = new Date(flight.timestamp * 1000).toDateString();
                 option.textContent = `${flight.flight} on ${prettyDate}`;
-
                 purchaseInsuranceSelect.appendChild(option);
             });
 
             flights.forEach((flight) => {
                 const option = document.createElement('option');
-
                 option.value = `${flight.airline}-${flight.flight}-${flight.timestamp}`;
-
                 const prettyDate = new Date(flight.timestamp * 1000).toDateString();
                 option.textContent = `${flight.flight} on ${prettyDate}`;
-
                 checkStatusSelect.appendChild(option);
             });
         });
 
 
-        /* User events */
+        /* Events interactions */
+
+
+        /* User interactions */
 
         DOM.elid('purchase-insurance').addEventListener('click', () => {
             let flight = DOM.elid('purchase-insurance-flights').value;
             flight = flight.split("-");
-
-            console.log(flight);
+            const amount = DOM.elid('purchase-insurance-amount').value;
 
             contract.purchaseInsurance(
                 flight[0],
                 flight[1],
                 flight[2],
+                amount,
                 (error, result) => {
                     console.log(error, result)
                 }
             );
-        });
+        }); // purchase-insurance
 
         DOM.elid('submit-oracle').addEventListener('click', () => {
             let flight = DOM.elid('check-status-flights').value;
@@ -82,7 +79,7 @@ import './flightsurety.css';
                     );
                 }
             );
-        })
+        }); // submit-oracle
 
     });
 

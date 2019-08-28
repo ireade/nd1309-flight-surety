@@ -14,14 +14,22 @@ const oracles = [];
 async function init() {
     const accounts = await web3.eth.getAccounts();
 
+    const NUMBER_OF_ORACLES = 10;
+    registerOracles(accounts.slice(1, NUMBER_OF_ORACLES + 1));
+
     flightSuretyApp.events.OracleRequest({fromBlock: 0}, (error, event) => {
-        if (error) console.log(error);
-        console.log(event);
+        if (error) return console.log(error);
+        if (!event.returnValues) return console.error("No returnValues");
+
+        respondToFetchFlightStatus(
+            event.returnValues.index,
+            event.returnValues.airline,
+            event.returnValues.flight,
+            event.returnValues.timestamp
+        )
     });
 
     simulateFetchFlightStatus(accounts[0]);
-
-    //registerOracles(accounts.slice(1, 4));
 }
 
 async function simulateFetchFlightStatus(owner) {
@@ -39,9 +47,7 @@ async function simulateFetchFlightStatus(owner) {
 async function registerOracles(oracleAccounts) {
 
     const fee = await flightSuretyApp.methods.REGISTRATION_FEE().call();
-
-    //const STATUS_CODES = [0, 10, 20, 30, 40, 50]; @todo: change
-    const STATUS_CODES = [0, 20];
+    const STATUS_CODES = [0, 10, 20, 30, 40, 50];
 
     for (let i = 0; i < oracleAccounts.length; i++) {
 

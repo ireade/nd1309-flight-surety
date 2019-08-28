@@ -40,6 +40,23 @@ export default class Contract {
             .call({ from: self.owner}, callback);
     }
 
+    getFlightKeyList(callback) {
+        let self = this;
+        self.flightSuretyApp.methods
+            .getFlightsKeyList()
+            .call({ from: self.owner }, callback);
+    }
+
+    purchaseInsurance(flightKey, callback) {
+        let self = this;
+        self.flightSuretyApp.methods
+            .purchaseInsurance(flightKey)
+            .send(
+                {from: self.owner, value: this.web3.utils.toWei('1', 'ether')},
+                callback
+            )
+    }
+
     fetchFlightStatus(flight, callback) {
         let self = this;
         let payload = {

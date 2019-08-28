@@ -1,33 +1,47 @@
 <!doctype html>
 <html lang="en">
-
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>FlightSurety</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link href="https://fonts.googleapis.com/css?family=Overpass:300,700&display=swap" rel="stylesheet">
 </head>
-
 <body>
-
-    <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
-        <a class="navbar-brand" href="#">FlightSurety</a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault"
-            aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-    </nav>
-
-    <main class="container">
-
-        <div id="display-wrapper" class="top-20">
+    <header>
+        <div class="wrapper">
+            <h1>Ire's FlightSurety</h1>
         </div>
-        <div class="row top-20">
-            <label class="form">Flight</label> <input type="text" id="flight-number"> <btn class="btn btn-primary" id="submit-oracle">Submit to Oracles</btn>
-        </div>
+    </header>
+
+    <main class="wrapper">
+        <section>
+            <div id="display-wrapper">
+            </div>
+        </section>
+
+        <section>
+            <h2>Purchase Insurance</h2>
+
+            <div>
+                <label>Flight Key List</label>
+                <select name="flightKeys" id="flight-keys">
+
+                </select>
+                <btn class="btn btn-primary" id="purchase-insurance">Buy Insurance?</btn>
+            </div>
+        </section>
+
+        <section>
+            <h2>Check Flight Status</h2>
+
+            <div>
+                <label>Flight</label>
+                <input type="text" id="flight-number">
+                <btn class="btn btn-primary" id="submit-oracle">Submit to Oracles</btn>
+            </div>
+
+        </section>
     </main>
-
 </body>
-
 </html>

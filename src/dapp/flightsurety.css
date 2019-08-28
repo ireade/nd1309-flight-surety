@@ -1,42 +1,99 @@
+/* Reset */
+
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed,
+figure, figcaption, footer, header, hgroup,
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    font: inherit;
+    font-size: 100%;
+    vertical-align: baseline;
+}
+
+article, aside, details, figcaption, figure,
+footer, header, hgroup, menu, nav, section {
+    display: block;
+}
+
+ul {
+    list-style: none;
+}
+
+html {
+    box-sizing: border-box;
+}
+*, *:before, *:after {
+    box-sizing: inherit;
+}
+
+.sr-only {
+    position: absolute;
+    clip: rect(1px,1px,1px,1px);
+}
+
+/* Typography */
+
+html {
+    font-size: 62.5%;
+}
+
 body {
     background-image: url('flight.jpg'); /* Source: iStockPhoto */
     background-repeat: no-repeat;
     background-size: cover;
+
+    font-family: 'Overpass', sans-serif;
+    font-weight: 300;
+    font-size: 1.6rem;
+    line-height: 1.4;
 }
 
-.container {
-    margin-top: 400px;
-    background-color: #000;
-    opacity: 0.9;
-    color: #fff;
-    padding: 40px;
+h1 {
+    font-weight: 700;
 }
 
-.top-20 {
-    margin-top: 20px;
+h2 {
+    font-weight: 700;
+    margin-bottom: 10px;
 }
 
-h5 {
-    color: #999999;
+
+/* Layout */
+
+.wrapper {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+header {
+    margin-bottom: 50px;
+    background-color: #fff;
+    text-align: center;
+    padding: 10px 0;
+}
+
+main {
+    margin: 100px auto;
 }
 
 section {
     margin-bottom: 50px;
+    background-color: #fff;
+    border-radius: 3px;
+    padding: 15px;
 }
 
-.field {
-    font-weight: bold;
-    text-align: right;
-}
 
-.field-value {
-    color: #0e7fa8;
-}
 
-label.form {
-    font-size: 14px;
-    margin-right: 20px;
-}
-input {
-    margin-right: 30px;
-}
+

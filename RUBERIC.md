@@ -5,8 +5,8 @@ https://review.udacity.com/#!/rubrics/1711/view
 ## Separation of Concerns, Operational Control and “Fail Fast”
 
 - [x] Smart Contract Separation
-- [ ] Dapp Created and Used for Contract Calls
-- [ ] Oracle Server Application
+- [x] Dapp Created and Used for Contract Calls
+- [x] Oracle Server Application
 - [x] Operational status control is implemented in contracts
 - [x] Contract functions “fail fast” by having a majority of “require()” calls at the beginning of function body
 

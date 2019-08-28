@@ -16,6 +16,34 @@ import './flightsurety.css';
             );
         });
 
+        contract.getFlightKeyList((error, flightKeys) => {
+            console.log(error, flightKeys);
+
+
+            const select = DOM.elid('flight-keys');
+
+            flightKeys.forEach((key) => {
+
+                const option = document.createElement('option');
+                option.value = key;
+                option.textContent = key;
+                select.appendChild(option);
+            })
+
+
+        });
+
+
+
+        /* User events */
+        DOM.elid('purchase-insurance').addEventListener('click', () => {
+            let flightKey = DOM.elid('flight-keys').value;
+
+            contract.purchaseInsurance(flightKey, (error, result) => {
+                console.log(error, result)
+            });
+        });
+
         // User-submitted transaction
         DOM.elid('submit-oracle').addEventListener('click', () => {
             let flight = DOM.elid('flight-number').value;
@@ -37,7 +65,7 @@ import './flightsurety.css';
 
 function display(title, description, results) {
     let displayDiv = DOM.elid("display-wrapper");
-    let section = DOM.section();
+    let section = DOM.div();
     section.appendChild(DOM.h2(title));
     section.appendChild(DOM.h5(description));
     results.map((result) => {

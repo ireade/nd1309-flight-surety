@@ -55,16 +55,18 @@ body {
 
     font-family: 'Overpass', sans-serif;
     font-weight: 300;
-    font-size: 1.6rem;
+    font-size: 1.5rem;
     line-height: 1.4;
 }
 
 h1 {
     font-weight: 700;
+    font-size: 1.6rem;
 }
 
 h2 {
     font-weight: 700;
+    font-size: 1.6rem;
     margin-bottom: 10px;
 }
 
@@ -94,6 +96,46 @@ section {
     padding: 15px;
 }
 
+/* Results */
+
+.description {
+    font-style: italic;
+    margin-bottom: 10px;
+}
+
+.row .field,
+.row .field-value {
+    display: inline;
+}
+
+.row .field {
+    font-weight: 700;
+}
+
+.row .field-value {
+
+}
+
+
+/* Form */
+
+label {
+    display: block;
+}
+
+select,
+input {
+    display: block;
+    width: 100%;
+    margin: 5px 0;
+}
+
+select,
+input,
+button {
+    height: 40px;
+    font: inherit;
+}
 
 
 

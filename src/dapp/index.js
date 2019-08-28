@@ -65,13 +65,14 @@ import './flightsurety.css';
 
 function display(title, description, results) {
     let displayDiv = DOM.elid("display-wrapper");
+
     let section = DOM.div();
     section.appendChild(DOM.h2(title));
-    section.appendChild(DOM.h5(description));
+    section.appendChild(DOM.p({className: 'description'}, description));
     results.map((result) => {
         let row = section.appendChild(DOM.div({className:'row'}));
-        row.appendChild(DOM.div({className: 'col-sm-4 field'}, result.label));
-        row.appendChild(DOM.div({className: 'col-sm-8 field-value'}, result.error ? String(result.error) : String(result.value)));
+        row.appendChild(DOM.div({className: 'field'}, result.label + ': '));
+        row.appendChild(DOM.div({className: 'field-value'}, result.error ? String(result.error) : String(result.value)));
         section.appendChild(row);
     })
     displayDiv.append(section);

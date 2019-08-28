@@ -15,36 +15,6 @@ contract FlightSuretyApp {
     FlightSuretyData flightSuretyData;
     address flightSuretyDataContractAddress;
 
-    // Flight
-
-    uint8 private constant STATUS_CODE_UNKNOWN = 0;
-    uint8 private constant STATUS_CODE_ON_TIME = 10;
-    uint8 private constant STATUS_CODE_LATE_AIRLINE = 20; // only code that results in payout
-    uint8 private constant STATUS_CODE_LATE_WEATHER = 30;
-    uint8 private constant STATUS_CODE_LATE_TECHNICAL = 40;
-    uint8 private constant STATUS_CODE_LATE_OTHER = 50;
-
-    struct Flight {
-        uint8 statusCode;
-        uint256 updatedTimestamp;
-        address airline;
-        string flight;
-    }
-
-    mapping(bytes32 => Flight) private flights;
-    bytes32[] private flightsKeyList;
-
-    // Airline
-
-
-
-
-    /********************************************************************************************/
-    /*                                       EVENT DEFINITIONS                                  */
-    /********************************************************************************************/
-
-    // @todo
-
 
     /********************************************************************************************/
     /*                                       FUNCTION MODIFIERS                                 */
@@ -194,6 +164,23 @@ contract FlightSuretyApp {
     /********************************************************************************************/
     /*                                   FLIGHTS FUNCTIONS                                      */
     /********************************************************************************************/
+
+    uint8 private constant STATUS_CODE_UNKNOWN = 0;
+    uint8 private constant STATUS_CODE_ON_TIME = 10;
+    uint8 private constant STATUS_CODE_LATE_AIRLINE = 20; // only code that results in payout
+    uint8 private constant STATUS_CODE_LATE_WEATHER = 30;
+    uint8 private constant STATUS_CODE_LATE_TECHNICAL = 40;
+    uint8 private constant STATUS_CODE_LATE_OTHER = 50;
+
+    struct Flight {
+        uint8 statusCode;
+        uint256 updatedTimestamp;
+        address airline;
+        string flight;
+    }
+
+    mapping(bytes32 => Flight) private flights;
+    bytes32[] private flightsKeyList;
 
     function getFlightsKeyList() public view returns(bytes32[])
     {

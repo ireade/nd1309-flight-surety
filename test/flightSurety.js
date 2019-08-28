@@ -28,8 +28,6 @@ contract('Flight Surety Tests', async (acc) => {
 before(async () => {
     config = await Test.Config(accounts);
     await config.flightSuretyData.setCallerAuthorizationStatus(config.flightSuretyApp.address, true);
-
-    // @todo: Make sure first airline pays dues
 });
 
 
@@ -162,3 +160,26 @@ it('Passenger can buy insurance for flight', async function () {
 
     assert.equal(BigNumber(insuranceState), boughtState, "Insurance is of incorrect state");
 });
+
+
+it('Passenger cannot buy more than 1 ether of insurance', async function () {
+
+    const flightKeyList = await config.flightSuretyApp.getFlightsKeyList();
+
+    const amount = web3.utils.toWei('2', 'ether');
+    const flightKey = flightKeyList[0];
+
+    let failed = false;
+
+    try {
+        await config.flightSuretyApp.purchaseInsurance(flightKey, {
+            from: passenger,
+            value: amount
+        });
+    } catch(err) {
+        failed = true;
+    }
+
+    assert.equal(failed, true, "Passenger was able to purchase insurance of more than 1 ether");
+});
+

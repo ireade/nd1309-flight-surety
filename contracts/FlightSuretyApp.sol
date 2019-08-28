@@ -236,7 +236,7 @@ contract FlightSuretyApp {
     /*                                     ORACLE MANAGEMENT                                    */
     /********************************************************************************************/
 
-    // Incremented to add pseudo-randomness at various points
+
     uint8 private nonce = 0;
 
     uint256 public constant REGISTRATION_FEE = 1 ether;
@@ -256,20 +256,20 @@ contract FlightSuretyApp {
         mapping(uint8 => address[]) responses;          // Mapping key is the status code reported
     }
 
-    // Track all oracle responses
     // Key = hash(index, flight, timestamp)
     mapping(bytes32 => ResponseInfo) private oracleResponses;
 
-    // Event fired each time an oracle submits a response
+
+    // Events
+
     event FlightStatusInfo(address airline, string flight, uint256 timestamp, uint8 status);
 
     event OracleReport(address airline, string flight, uint256 timestamp, uint8 status);
 
-    // Event fired when flight status request is submitted
-    // Oracles track this and if they have a matching index
-    // they fetch data and submit a response
     event OracleRequest(uint8 index, address airline, string flight, uint256 timestamp);
 
+
+    // Functions
 
     function registerOracle() external payable
     {

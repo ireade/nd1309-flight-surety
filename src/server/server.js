@@ -2,90 +2,75 @@ import FlightSuretyApp from '../../build/contracts/FlightSuretyApp.json';
 import Config from './config.json';
 import express from 'express';
 import Web3 from 'web3';
+import BigNumber from 'bignumber.js';
 
 const config = Config['localhost'];
 const web3 = new Web3(new Web3.providers.WebsocketProvider(config.url.replace('http', 'ws')));
 
 const flightSuretyApp = new web3.eth.Contract(FlightSuretyApp.abi, config.appAddress);
 
-
 const oracles = [];
 
-
-async function registerOracles() {
-
+async function init() {
     const accounts = await web3.eth.getAccounts();
 
-    const oracleAddress = accounts[9];
-    const fee = web3.utils.toWei('1', 'ether');
+    flightSuretyApp.events.OracleRequest({fromBlock: 0}, (error, event) => {
+        if (error) console.log(error);
+        console.log(event);
+    });
 
+    simulateFetchFlightStatus(accounts[0]);
 
-    // Register Oracle
+    const oracleAccounts = [ accounts[1], accounts[2] ];
+    //registerOracles(oracleAccounts);
+}
 
-    try {
+async function simulateFetchFlightStatus(owner) {
+    console.log("Simulating fetchFlightStatus");
+
+    const airline = owner;
+    const flight = 'ND1309';
+    const timestamp = Math.floor(Date.now() / 1000);
+
+    flightSuretyApp.methods
+        .fetchFlightStatus(airline, flight, timestamp)
+        .call({ from: owner });
+}
+
+async function registerOracles(oracleAccounts) {
+
+    const fee = await flightSuretyApp.methods.REGISTRATION_FEE().call();
+
+    //const RESPONSES = [0, 10, 20, 30, 40, 50]; @todo: change
+    const RESPONSES = [0, 20];
+
+    for (let i = 0; i < oracleAccounts.length; i++) {
+
+        const address = oracleAccounts[i];
+        const response = RESPONSES[Math.floor(Math.random()*RESPONSES.length)];
+
         await flightSuretyApp.methods.registerOracle().send({
-            from: oracleAddress,
+            from: address,
             value: fee,
             gas: 3000000
         });
-    } catch (err) {
-        console.log("Error registerOracle");
-        console.log(err);
-    }
-
-
-    // Get Oracle Indexes
-
-    try {
 
         const indexes = await flightSuretyApp.methods.getMyIndexes().call({
-            from: oracleAddress
+            from: address
         });
 
-        oracles.push({
-            address: oracleAddress,
-            indexes: indexes
-        });
-
-    } catch (err) {
-        console.log("Error getMyIndexes");
-        console.log(err);
+        oracles.push({ address, indexes, response });
     }
 
-
-    ////
-
     console.log(oracles);
+}
+
+async function sendOracleResponse() {
+
+}
 
 
-    // Simulate fetchFlightStatus
-
-
-    setTimeout(async () => {
-        console.log("fetchFlightStatus **********************************");
-
-        flightSuretyApp.methods
-            .fetchFlightStatus(accounts[0], "IRE123", Math.floor(Date.now() / 1000))
-            .call();
-
-    }, 1000);
-
-};
-
-
-flightSuretyApp.events.OracleRequest({
-    fromBlock: 0
-})
-.on('data', function(event){
-    console.log(event);
-})
-.on('changed', function(event){
-})
-.on('error', console.error);
-
-
-
-registerOracles();
+init();
 
 
 

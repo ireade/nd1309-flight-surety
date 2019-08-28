@@ -43,8 +43,8 @@ it('can register oracles', async () => {
 
 it('can request flight status', async () => {
 
-    const flight = 'ND1309';
     const airline = config.firstAirline;
+    const flight = 'ND1309';
     const timestamp = Math.floor(Date.now() / 1000);
 
     const oracleRequest = await config.flightSuretyApp.fetchFlightStatus(airline, flight, timestamp);

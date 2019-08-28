@@ -1,20 +1,26 @@
 import FlightSuretyApp from '../../build/contracts/FlightSuretyApp.json';
+import FlightSuretyData from '../../build/contracts/FlightSuretyData.json';
 import Config from './config.json';
 import Web3 from 'web3';
 
 export default class Contract {
     constructor(network, callback) {
 
-        let config = Config[network];
-        this.web3 = new Web3(new Web3.providers.HttpProvider(config.url));
-        this.flightSuretyApp = new this.web3.eth.Contract(FlightSuretyApp.abi, config.appAddress);
+        this.config = Config[network];
+        this.web3 = new Web3(new Web3.providers.HttpProvider(this.config.url));
+
+        this.flightSuretyApp = new this.web3.eth.Contract(FlightSuretyApp.abi, this.config.appAddress);
+        this.flightSuretyData = new this.web3.eth.Contract(FlightSuretyData.abi, this.config.dataAddress);
+
         this.initialize(callback);
+
         this.owner = null;
         this.airlines = [];
         this.passengers = [];
     }
 
     initialize(callback) {
+        let self = this;
         this.web3.eth.getAccounts((error, accts) => {
            
             this.owner = accts[0];
@@ -29,7 +35,9 @@ export default class Contract {
                 this.passengers.push(accts[counter++]);
             }
 
-            callback(this);
+            self.flightSuretyData.methods
+                .setCallerAuthorizationStatus(self.config.appAddress, true)
+                .call({ from: self.owner }, callback);
         });
     }
 
@@ -40,17 +48,25 @@ export default class Contract {
             .call({ from: self.owner}, callback);
     }
 
-    getFlightKeyList(callback) {
+    getFlights(callback) {
         let self = this;
+
         self.flightSuretyApp.methods
-            .getFlightsKeyList()
-            .call({ from: self.owner }, callback);
+            .getFlightsCount()
+            .call({ from: self.owner }, async (err, flightsCount) => {
+                const flights = [];
+                for (var i = 0; i < flightsCount; i++) {
+                    const res = await self.flightSuretyApp.methods.getFlight(i).call({ from: self.owner });
+                    flights.push(res);
+                }
+                callback(null, flights);
+            });
     }
 
-    purchaseInsurance(flightKey, callback) {
+    purchaseInsurance(airline, flight, timestamp, callback) {
         let self = this;
         self.flightSuretyApp.methods
-            .purchaseInsurance(flightKey)
+            .purchaseInsurance(airline, flight, timestamp)
             .send(
                 {from: self.owner, value: this.web3.utils.toWei('1', 'ether')},
                 callback

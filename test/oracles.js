@@ -54,7 +54,7 @@ it('can request flight status', async () => {
     const flight = 'ND1309';
     const timestamp = Math.floor(Date.now() / 1000);
 
-    const oracleRequest = await config.flightSuretyApp.fetchFlightStatusWithoutKey(airline, flight, timestamp);
+    const oracleRequest = await config.flightSuretyApp.fetchFlightStatus(airline, flight, timestamp);
 
     let emittedIndex;
 

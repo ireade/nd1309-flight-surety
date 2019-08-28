@@ -138,25 +138,24 @@ it('Airline can register new flight', async function () {
 
 });
 
-
 /****************************************************************************************/
 /* Passenger Insurance                                                                  */
 /****************************************************************************************/
 
 it('Passenger can buy insurance for flight', async function () {
 
-    const flightKeyList = await config.flightSuretyApp.getFlightsKeyList();
-
+    const flight1 = await config.flightSuretyApp.getFlight(0);
     const amount = await config.flightSuretyApp.MAX_INSURANCE_AMOUNT.call();
-    const flightKey = flightKeyList[0];
 
-    await config.flightSuretyApp.purchaseInsurance(flightKey, {
-        from: passenger,
-        value: amount
-    });
+    await config.flightSuretyApp.purchaseInsurance(
+        flight1.airline,
+        flight1.flight,
+        flight1.timestamp,
+        { from: passenger, value: amount }
+    );
 
     const boughtState = 0;
-    const insuranceState = await config.flightSuretyData.getInsuranceState(passenger, flightKey);
+    const insuranceState = await config.flightSuretyData.getInsuranceState(passenger, flight1.flight);
 
     assert.equal(BigNumber(insuranceState), boughtState, "Insurance is of incorrect state");
 });
@@ -164,19 +163,19 @@ it('Passenger can buy insurance for flight', async function () {
 
 it('Passenger cannot buy more than 1 ether of insurance', async function () {
 
-    const flightKeyList = await config.flightSuretyApp.getFlightsKeyList();
-
+    const flight1 = await config.flightSuretyApp.getFlight(0);
     let amount = await config.flightSuretyApp.MAX_INSURANCE_AMOUNT.call();
     amount = amount + amount;
-    const flightKey = flightKeyList[0];
 
     let failed = false;
 
     try {
-        await config.flightSuretyApp.purchaseInsurance(flightKey, {
-            from: passenger,
-            value: amount
-        });
+        await config.flightSuretyApp.purchaseInsurance(
+            flight1.airline,
+            flight1.flight,
+            flight1.timestamp,
+            { from: passenger, value: amount }
+        );
     } catch(err) {
         failed = true;
     }
@@ -186,19 +185,16 @@ it('Passenger cannot buy more than 1 ether of insurance', async function () {
 
 it('Passenger can check status of flight', async function () {
 
-    const flightKeyList = await config.flightSuretyApp.getFlightsKeyList();
+    const flight1 = await config.flightSuretyApp.getFlight(0);
 
-    const flightKey = flightKeyList[0];
-
-    const fetchFlightStatus = await config.flightSuretyApp.fetchFlightStatus(flightKey);
-
-    truffleAssert.eventEmitted(fetchFlightStatus, 'OracleRequest', (ev) => {
-        return ev;
-    });
-
+    const fetchFlightStatus = await config.flightSuretyApp.fetchFlightStatus(
+        flight1.airline,
+        flight1.flight,
+        flight1.timestamp,
+    );
 
     truffleAssert.eventEmitted(fetchFlightStatus, 'OracleRequest', (ev) => {
-        return ev;
+        return ev.airline === flight1.airline;
     });
 });
 

@@ -4,50 +4,48 @@ import './flightsurety.css';
 
 (async() => {
 
-    let result = null;
-
     const contract = new Contract('localhost', (foo) => {
 
         contract.isOperational((error, result) => {
             display(
                 'Operational Status',
-                'Check if contract is operational',
-                [ { label: 'Operational Status', error: error, value: result} ]
+                'Checks if contract is operational',
+                [ { label: 'Status', error: error, value: result} ]
             );
         });
 
-        contract.getFlightKeyList((error, flightKeys) => {
-            console.log(error, flightKeys);
-
-
+        contract.getFlights((error, flights) => {
             const select = DOM.elid('flight-keys');
 
-            flightKeys.forEach((key) => {
-
+            flights.forEach((flight) => {
                 const option = document.createElement('option');
-                option.value = key;
-                option.textContent = key;
+                option.value = `${flight.airline}-${flight.flight}-${flight.timestamp}`;
+                option.textContent = flight.flight;
                 select.appendChild(option);
-            })
-
-
-        });
-
-
-
-        /* User events */
-        DOM.elid('purchase-insurance').addEventListener('click', () => {
-            let flightKey = DOM.elid('flight-keys').value;
-
-            contract.purchaseInsurance(flightKey, (error, result) => {
-                console.log(error, result)
             });
         });
 
-        // User-submitted transaction
+
+        /* User events */
+
+        DOM.elid('purchase-insurance').addEventListener('click', () => {
+            let flight = DOM.elid('flight-keys').value;
+            flight = flight.split("-");
+
+            console.log(flight);
+
+            contract.purchaseInsurance(
+                flight[0],
+                flight[1],
+                flight[2],
+                (error, result) => {
+                    console.log(error, result)
+                }
+            );
+        });
+
         DOM.elid('submit-oracle').addEventListener('click', () => {
             let flight = DOM.elid('flight-number').value;
-            // Write transaction
             contract.fetchFlightStatus(flight, (error, result) => {
                 display(
                     'Oracles',
@@ -58,7 +56,6 @@ import './flightsurety.css';
         })
 
     });
-    
 
 })();
 
@@ -74,14 +71,7 @@ function display(title, description, results) {
         row.appendChild(DOM.div({className: 'field'}, result.label + ': '));
         row.appendChild(DOM.div({className: 'field-value'}, result.error ? String(result.error) : String(result.value)));
         section.appendChild(row);
-    })
+    });
     displayDiv.append(section);
 
 }
-
-
-
-
-
-
-

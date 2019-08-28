@@ -140,9 +140,11 @@ contract FlightSuretyApp {
     event PassengerInsuranceBought(address passenger, bytes32 flightKey);
 
 
-    function purchaseInsurance(bytes32 flightKey)
+    function purchaseInsurance(address airline, string flight, uint256 timestamp)
     external payable
     {
+        bytes32 flightKey = getFlightKey(airline, flight, timestamp);
+
         require(bytes(flights[flightKey].flight).length > 0, "Flight does not exist");
 
         // @todo: make sure insurance doesn't already exist
@@ -150,10 +152,12 @@ contract FlightSuretyApp {
         require(msg.value <= MAX_INSURANCE_AMOUNT, "Passengers can buy a maximum of 1 ether for insurance");
 
         flightSuretyDataContractAddress.transfer(msg.value);
-        flightSuretyData.createInsurance(msg.sender, flightKey, msg.value);
+        flightSuretyData.createInsurance(msg.sender, flight, msg.value);
 
         emit PassengerInsuranceBought(msg.sender, flightKey);
     }
+
+    // @todo: check
 
 
     /********************************************************************************************/
@@ -169,7 +173,7 @@ contract FlightSuretyApp {
 
     struct Flight {
         uint8 statusCode;
-        uint256 updatedTimestamp;
+        uint256 timestamp;
         address airline;
         string flight;
     }
@@ -180,9 +184,16 @@ contract FlightSuretyApp {
     event FlightStatusProcessed(address airline, string flight, uint8 statusCode);
 
 
-    function getFlightsKeyList() public view returns(bytes32[])
+    function getFlightsCount() external view returns(uint256 count)
     {
-        return flightsKeyList;
+        return flightsKeyList.length;
+    }
+
+    function getFlight(uint256 index) external view returns(address airline, string flight, uint256 timestamp)
+    {
+        airline = flights[ flightsKeyList[index] ].airline;
+        flight = flights[ flightsKeyList[index] ].flight;
+        timestamp = flights[ flightsKeyList[index] ].timestamp;
     }
 
     function registerFlight(uint8 status, string flight)
@@ -204,24 +215,7 @@ contract FlightSuretyApp {
         emit FlightStatusProcessed(airline, flight, statusCode);
     }
 
-    function fetchFlightStatus(bytes32 flightKey)
-    external
-    {
-        Flight memory flight = flights[flightKey];
-
-        uint8 index = getRandomIndex(msg.sender);
-
-        bytes32 key = keccak256(abi.encodePacked(index, flight.airline, flight.flight, flight.updatedTimestamp));
-
-        oracleResponses[key] = ResponseInfo({
-                requester : msg.sender,
-                isOpen : true
-            });
-
-        emit OracleRequest(index, flight.airline, flight.flight, flight.updatedTimestamp);
-    }
-
-    function fetchFlightStatusWithoutKey(address airline, string flight, uint256 timestamp)
+    function fetchFlightStatus(address airline, string flight, uint256 timestamp)
     external
     {
         uint8 index = getRandomIndex(msg.sender);
@@ -390,7 +384,7 @@ contract FlightSuretyData {
 
     ///
 
-    function createInsurance(address passenger, bytes32 flight, uint256 amount)
+    function createInsurance(address passenger, string flight, uint256 amount)
     {}
 
 }

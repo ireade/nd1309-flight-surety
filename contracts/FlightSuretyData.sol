@@ -156,39 +156,39 @@ contract FlightSuretyData {
     }
 
     struct Insurance {
-        bytes32 flightKey;
+        string flight;
         uint256 amount;
         InsuranceState state;
     }
 
-    mapping(address => mapping(bytes32 => Insurance)) passengerInsurances;
+    mapping(address => mapping(string => Insurance)) passengerInsurances;
     mapping(address => uint256) passengerBalances;
 
 
-    function getInsuranceState(address passenger, bytes32 flightKey)
+    function getInsuranceState(address passenger, string flight)
     external
     view
     requireCallerAuthorized
     returns (InsuranceState)
     {
-        return passengerInsurances[passenger][flightKey].state;
+        return passengerInsurances[passenger][flight].state;
     }
 
-    function createInsurance(address passenger, bytes32 flightKey, uint256 amount)
+    function createInsurance(address passenger, string flight, uint256 amount)
     external
     requireCallerAuthorized
     {
-        require(passengerInsurances[passenger][flightKey].amount != amount, "Insurance already exists");
+        require(passengerInsurances[passenger][flight].amount != amount, "Insurance already exists");
 
-        passengerInsurances[passenger][flightKey] = Insurance(flightKey, amount, InsuranceState.Bought);
+        passengerInsurances[passenger][flight] = Insurance(flight, amount, InsuranceState.Bought);
     }
 
-    function claimInsurance(address passenger, bytes32 flightKey)
+    function claimInsurance(address passenger, string flight)
     external
     requireCallerAuthorized
     {
-        passengerInsurances[passenger][flightKey].state = InsuranceState.Claimed;
-        creditPassengerBalance(passenger, passengerInsurances[passenger][flightKey].amount);
+        passengerInsurances[passenger][flight].state = InsuranceState.Claimed;
+        creditPassengerBalance(passenger, passengerInsurances[passenger][flight].amount);
     }
 
     function creditPassengerBalance(address passenger, uint256 amount)

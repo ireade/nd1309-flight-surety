@@ -6,57 +6,12 @@ contract FlightSuretyData {
     using SafeMath for uint256;
 
     /********************************************************************************************/
-    /*                                       DATA VARIABLES                                     */
+    /*                                GLOBAL DATA VARIABLES                                     */
     /********************************************************************************************/
 
     address private contractOwner;
     bool private operational = true;
     mapping(address => bool) private authorizedCallers;
-
-
-    /* Airlines */
-
-    enum AirlineState {
-        Applied,
-        Registered,
-        Paid
-    }
-
-    struct Airline {
-        address airlineAddress;
-        AirlineState state;
-        string name;
-
-        mapping(address => bool) approvals;
-        uint8 approvalCount;
-    }
-
-    mapping(address => Airline) internal airlines;
-    uint256 internal totalPaidAirlines = 0;
-
-
-    /* Passenger Insurance */
-
-    enum InsuranceState {
-        Bought,
-        Claimed
-    }
-
-    struct Insurance {
-        bytes32 flight;
-        uint256 amount;
-        InsuranceState state;
-    }
-
-    mapping(address => mapping(bytes32 => Insurance)) passengerInsurances;
-    mapping(address => uint256) passengerBalances;
-
-
-    /********************************************************************************************/
-    /*                                       EVENT DEFINITIONS                                  */
-    /********************************************************************************************/
-
-    // todo
 
 
     /********************************************************************************************/
@@ -81,8 +36,9 @@ contract FlightSuretyData {
         _;
     }
 
+
     /********************************************************************************************/
-    /*                                       CONSTRUCTOR                                        */
+    /*                           CONSTRUCTOR & UTILITY FUNCTIONS                                */
     /********************************************************************************************/
 
     constructor() public
@@ -93,9 +49,12 @@ contract FlightSuretyData {
         totalPaidAirlines++;
     }
 
-    /********************************************************************************************/
-    /*                                       UTILITY FUNCTIONS                                  */
-    /********************************************************************************************/
+    function()
+    external
+    payable
+    {
+        // @todo: move fallback function to app
+    }
 
     function isOperational() public view returns (bool)
     {
@@ -117,11 +76,29 @@ contract FlightSuretyData {
         return authorizedCallers[caller] || false;
     }
 
+
     /********************************************************************************************/
-    /*                                     SMART CONTRACT FUNCTIONS                             */
+    /*                                     AIRLINE FUNCTIONS                                    */
     /********************************************************************************************/
 
-    /* Airlines */
+    enum AirlineState {
+        Applied,
+        Registered,
+        Paid
+    }
+
+    struct Airline {
+        address airlineAddress;
+        AirlineState state;
+        string name;
+
+        mapping(address => bool) approvals;
+        uint8 approvalCount;
+    }
+
+    mapping(address => Airline) internal airlines;
+    uint256 internal totalPaidAirlines = 0;
+
 
     function getAirlineState(address airline)
     external
@@ -170,38 +147,64 @@ contract FlightSuretyData {
     }
 
 
-    /* Passenger Insurance */
+    /********************************************************************************************/
+    /*                         PASSENGER INSURANCE FUNCTIONS                                    */
+    /********************************************************************************************/
 
-    function getInsuranceState(address passenger, bytes32 flight)
+    enum InsuranceState {
+        Bought,
+        Claimed
+    }
+
+    struct Insurance {
+        bytes32 flightKey;
+        uint256 amount;
+        InsuranceState state;
+    }
+
+    mapping(address => mapping(bytes32 => Insurance)) passengerInsurances;
+    mapping(address => uint256) passengerBalances;
+
+
+    function getInsuranceState(address passenger, bytes32 flightKey)
     external
+    view
     requireCallerAuthorized
     returns (InsuranceState)
     {
-        return passengerInsurances[passenger][flight].state;
+        return passengerInsurances[passenger][flightKey].state;
     }
 
-    function createInsurance(address passenger, bytes32 flight, uint256 amount)
+    function createInsurance(address passenger, bytes32 flightKey, uint256 amount)
     external
     requireCallerAuthorized
     {
+        require(passengerInsurances[passenger][flightKey].amount != amount, "Insurance already exists");
 
-        // @todo: Make sure doesn't already exist;
-
-        passengerInsurances[passenger][flight] = Insurance(flight, amount, InsuranceState.Bought);
+        passengerInsurances[passenger][flightKey] = Insurance(flightKey, amount, InsuranceState.Bought);
     }
 
-    function claimInsurance(address passenger, bytes32 flight)
+    function claimInsurance(address passenger, bytes32 flightKey)
     external
     requireCallerAuthorized
     {
-        passengerInsurances[passenger][flight].state = InsuranceState.Claimed;
+        passengerInsurances[passenger][flightKey].state = InsuranceState.Claimed;
+        creditPassengerBalance(passenger, passengerInsurances[passenger][flightKey].amount);
     }
 
     function creditPassengerBalance(address passenger, uint256 amount)
-    external
+    private
     requireCallerAuthorized
     {
         passengerBalances[passenger] = passengerBalances[passenger] + amount;
+    }
+
+    function getPassengerBalance()
+    external
+    view
+    returns (uint256)
+    {
+        return passengerBalances[msg.sender];
     }
 
     function payPassenger(address passenger, uint256 amount)
@@ -213,36 +216,6 @@ contract FlightSuretyData {
         passengerBalances[passenger] = passengerBalances[passenger] - amount;
 
         passenger.transfer(amount);
-    }
-
-
-    /********************************************************************************************/
-    /*                                     SMART CONTRACT FUNCTIONS                             */
-    /********************************************************************************************/
-
-
-    function getFlightKey
-    (
-        address airline,
-        string memory flight,
-        uint256 timestamp
-    )
-    pure
-    internal
-    returns (bytes32)
-    {
-        return keccak256(abi.encodePacked(airline, flight, timestamp));
-    }
-
-    /**
-    * @dev Fallback function for funding smart contract.
-    *
-    */
-    function()
-    external
-    payable
-    {
-        // @todo: move fallback function to app
     }
 
 

@@ -1,4 +1,5 @@
 const Test = require('../config/testConfig.js');
+const truffleAssert = require('truffle-assertions');
 const BigNumber = require('bignumber.js');
 
 let config;
@@ -10,6 +11,8 @@ let thirdAirline;
 let fourthAirline;
 let fifthAirline;
 
+let passenger;
+
 contract('Flight Surety Tests', async (acc) => {
     accounts = acc;
 
@@ -18,6 +21,8 @@ contract('Flight Surety Tests', async (acc) => {
     thirdAirline = accounts[2];
     fourthAirline = accounts[3];
     fifthAirline = accounts[4];
+
+    passenger = accounts[5];
 });
 
 before(async () => {
@@ -37,8 +42,6 @@ it(`(multiparty) has correct initial isOperational() value`, async function () {
     assert.equal(await config.flightSuretyApp.isOperational(), true, "Incorrect initial operating status value for flightSuretyApp");
 });
 
-// @todo: Tests for setting operational status?
-
 it('flightSuretyApp is authorised to make calls to flightSuretyData', async function () {
     const status = await config.flightSuretyData.getCallerAuthorizationStatus(config.flightSuretyApp.address);
     assert.equal(status, true, "flightSuretyApp is not authorized");
@@ -54,7 +57,7 @@ it('Contract owner is created as first airline', async function () {
 });
 
 it('Airlines can apply for registration', async function () {
-    await config.flightSuretyApp.applyForAirlineRegistration("Second Airline", { from: secondAirline });
+    const applyForAirlineRegistration = await config.flightSuretyApp.applyForAirlineRegistration("Second Airline", { from: secondAirline });
     await config.flightSuretyApp.applyForAirlineRegistration("Third Airline", { from: thirdAirline });
     await config.flightSuretyApp.applyForAirlineRegistration("Fourth Airline", { from: fourthAirline });
     await config.flightSuretyApp.applyForAirlineRegistration("Fifth Airline", { from: fifthAirline });
@@ -67,10 +70,14 @@ it('Airlines can apply for registration', async function () {
     assert.equal(await config.flightSuretyData.getAirlineState(thirdAirline), appliedState, "3rd applied airline is of incorrect state");
     assert.equal(await config.flightSuretyData.getAirlineState(fourthAirline), appliedState, "4th applied airline is of incorrect state");
     assert.equal(await config.flightSuretyData.getAirlineState(fifthAirline), appliedState, "5th applied airline is of incorrect state");
+
+    truffleAssert.eventEmitted(applyForAirlineRegistration, 'AirlineApplied', (ev) => {
+        return ev.airline === secondAirline;
+    });
 });
 
 it('Paid airline can approve up to 4 applied airlines', async function () {
-    await config.flightSuretyApp.approveAirlineRegistration(secondAirline, { from: firstAirline });
+    const approveAirlineRegistration = await config.flightSuretyApp.approveAirlineRegistration(secondAirline, { from: firstAirline });
     await config.flightSuretyApp.approveAirlineRegistration(thirdAirline, { from: firstAirline });
     await config.flightSuretyApp.approveAirlineRegistration(fourthAirline, { from: firstAirline });
 
@@ -79,10 +86,14 @@ it('Paid airline can approve up to 4 applied airlines', async function () {
     assert.equal(await config.flightSuretyData.getAirlineState(secondAirline), registeredState, "2nd registered airline is of incorrect state");
     assert.equal(await config.flightSuretyData.getAirlineState(thirdAirline), registeredState, "3rd registered airline is of incorrect state");
     assert.equal(await config.flightSuretyData.getAirlineState(fourthAirline), registeredState, "4th registered airline is of incorrect state");
+
+    truffleAssert.eventEmitted(approveAirlineRegistration, 'AirlineRegistered', (ev) => {
+        return ev.airline === secondAirline;
+    });
 });
 
 it('Registered airlines can pay dues', async function () {
-    await config.flightSuretyApp.payAirlineDues({ from: secondAirline, value: web3.utils.toWei('10', 'ether') });
+    const payAirlineDues = await config.flightSuretyApp.payAirlineDues({ from: secondAirline, value: web3.utils.toWei('10', 'ether') });
     await config.flightSuretyApp.payAirlineDues({ from: thirdAirline, value: web3.utils.toWei('10', 'ether') });
     await config.flightSuretyApp.payAirlineDues({ from: fourthAirline, value: web3.utils.toWei('10', 'ether') });
 
@@ -91,6 +102,10 @@ it('Registered airlines can pay dues', async function () {
     assert.equal(await config.flightSuretyData.getAirlineState(secondAirline), paidState, "2nd paid airline is of incorrect state");
     assert.equal(await config.flightSuretyData.getAirlineState(thirdAirline), paidState, "3rd paid airline is of incorrect state");
     assert.equal(await config.flightSuretyData.getAirlineState(fourthAirline), paidState, "4th paid airline is of incorrect state");
+
+    truffleAssert.eventEmitted(payAirlineDues, 'AirlinePaid', (ev) => {
+        return ev.airline === secondAirline;
+    });
 
     const balance = await web3.eth.getBalance(config.flightSuretyData.address);
     const balanceEther = web3.utils.fromWei(balance, 'ether');
@@ -108,8 +123,12 @@ it('Multiparty consensus required to approve fifth airline', async function () {
     assert.equal(await config.flightSuretyData.getAirlineState(fifthAirline), 0, "Single airline should not be able to approve a fifth airline alone");
 
     // Second approval should pass
-    await config.flightSuretyApp.approveAirlineRegistration(fifthAirline, { from: secondAirline });
+    const approveAirlineRegistration = await config.flightSuretyApp.approveAirlineRegistration(fifthAirline, { from: secondAirline });
     assert.equal(await config.flightSuretyData.getAirlineState(fifthAirline), 1, "5th registered airline is of incorrect state");
+
+    truffleAssert.eventEmitted(approveAirlineRegistration, 'AirlineRegistered', (ev) => {
+        return ev.airline === fifthAirline;
+    });
 });
 
 
@@ -118,15 +137,28 @@ it('Multiparty consensus required to approve fifth airline', async function () {
 /****************************************************************************************/
 
 it('Airline can register new flight', async function () {
-    // Note: Based on 4 paid airlines
 
-    // First approval should fail
-    try {
-        await config.flightSuretyApp.approveAirlineRegistration(fifthAirline, { from: firstAirline });
-    } catch (err) {}
-    assert.equal(await config.flightSuretyData.getAirlineState(fifthAirline), 0, "Single airline should not be able to approve a fifth airline alone");
+});
 
-    // Second approval should pass
-    await config.flightSuretyApp.approveAirlineRegistration(fifthAirline, { from: secondAirline });
-    assert.equal(await config.flightSuretyData.getAirlineState(fifthAirline), 1, "5th registered airline is of incorrect state");
+
+/****************************************************************************************/
+/* Passenger Insurance                                                                  */
+/****************************************************************************************/
+
+it('Passenger can buy insurance for flight', async function () {
+
+    const flightKeyList = await config.flightSuretyApp.getFlightsKeyList();
+
+    const amount = web3.utils.toWei('1', 'ether');
+    const flightKey = flightKeyList[0];
+
+    await config.flightSuretyApp.purchaseInsurance(flightKey, {
+        from: passenger,
+        value: amount
+    });
+
+    const boughtState = 0;
+    const insuranceState = await config.flightSuretyData.getInsuranceState(passenger, flightKey);
+
+    assert.equal(BigNumber(insuranceState), boughtState, "Insurance is of incorrect state");
 });

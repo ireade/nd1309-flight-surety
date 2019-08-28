@@ -29,7 +29,7 @@ async function init() {
         )
     });
 
-    simulateFetchFlightStatus(accounts[0]);
+    //simulateFetchFlightStatus(accounts[0]);
 }
 
 async function simulateFetchFlightStatus(owner) {

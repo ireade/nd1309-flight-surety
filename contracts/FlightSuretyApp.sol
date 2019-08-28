@@ -6,7 +6,7 @@ contract FlightSuretyApp {
     using SafeMath for uint256;
 
     /********************************************************************************************/
-    /*                                       DATA VARIABLES                                     */
+    /*                                GLOBAL DATA VARIABLES                                     */
     /********************************************************************************************/
 
     address private contractOwner;
@@ -32,10 +32,11 @@ contract FlightSuretyApp {
     }
 
     mapping(bytes32 => Flight) private flights;
+    bytes32[] private flightsKeyList;
 
     // Airline
 
-    uint8 private constant NO_AIRLINES_REQUIRED_FOR_CONSENSUS_VOTING = 4;
+
 
 
     /********************************************************************************************/
@@ -73,27 +74,26 @@ contract FlightSuretyApp {
         _;
     }
 
+
     /********************************************************************************************/
-    /*                                       CONSTRUCTOR                                        */
+    /*                           CONSTRUCTOR & UTILITY FUNCTIONS                                */
     /********************************************************************************************/
 
     constructor(address dataContractAddress) public
     {
         contractOwner = msg.sender;
 
+        // Create first airline
         flightSuretyDataContractAddress = dataContractAddress;
         flightSuretyData = FlightSuretyData(flightSuretyDataContractAddress);
 
-        // @todo: fix?
-//        for(var i = 0; i < 3; i++) {
-//            bytes32 flightKey = getFlightKey(msg.sender, i, now);
-//            flights[flightKey] = Flight(20, now, msg.sender, i);
-//        }
+        // Initial flights
+        for (uint8 i = 0; i < 20; i++) {
+            bytes32 flightKey = getFlightKey(contractOwner, "FLIGHT1", now);
+            flights[flightKey] = Flight(STATUS_CODE_UNKNOWN, now, contractOwner, "FLIGHT1");
+            flightsKeyList.push(flightKey);
+        }
     }
-
-    /********************************************************************************************/
-    /*                                       UTILITY FUNCTIONS                                  */
-    /********************************************************************************************/
 
     function isOperational() public view returns (bool)
     {
@@ -107,16 +107,19 @@ contract FlightSuretyApp {
 
 
     /********************************************************************************************/
-    /*                                     SMART CONTRACT FUNCTIONS                             */
+    /*                                     AIRLINE FUNCTIONS                                    */
     /********************************************************************************************/
 
-    /* Airline flow ********************** */
+    uint8 private constant NO_AIRLINES_REQUIRED_FOR_CONSENSUS_VOTING = 4;
+
+    event AirlineApplied(address airline);
+    event AirlineRegistered(address airline);
+    event AirlinePaid(address airline);
 
     function applyForAirlineRegistration(string airlineName) external
     {
         flightSuretyData.createAirline(msg.sender, 0, airlineName);
-
-        // @todo emit event
+        emit AirlineApplied(msg.sender);
     }
 
     function approveAirlineRegistration(address airline) external onlyPaidAirlines
@@ -136,7 +139,7 @@ contract FlightSuretyApp {
 
         if (approved) {
             flightSuretyData.updateAirlineState(airline, 1);
-            // @todo emit event
+            emit AirlineRegistered(airline);
         }
     }
 
@@ -145,35 +148,57 @@ contract FlightSuretyApp {
         require(msg.value == 10 ether, "Payment of 10 ether is required");
 
         flightSuretyDataContractAddress.transfer(msg.value);
-
         flightSuretyData.updateAirlineState(msg.sender, 2);
 
-        // @todo: emit paid event
+        emit AirlinePaid(msg.sender);
     }
 
 
-    /* Passenger flow ********************** */
+    /********************************************************************************************/
+    /*                         PASSENGER INSURANCE FUNCTIONS                                    */
+    /********************************************************************************************/
 
-    function purchaseInsurance(bytes32 flight) external payable
+    event PassengerInsuranceBought(address passenger, bytes32 flightKey);
+
+    function purchaseInsurance(bytes32 flightKey) external payable
     {
-        // @todo: make sure flight exists
+        require(bytes(flights[flightKey].flight).length > 0, "Flight does not exist");
+
+        // @todo: make sure insurance doesn't already exist
 
         require(msg.value <= 1 ether, "Passengers can buy a maximum of 1 ether for insurance");
 
         flightSuretyDataContractAddress.transfer(msg.value);
+        flightSuretyData.createInsurance(msg.sender, flightKey, msg.value);
 
-        flightSuretyData.createInsurance(msg.sender, flight, msg.value);
+        emit PassengerInsuranceBought(msg.sender, flightKey);
     }
 
-    function claimInsurance(bytes32 flight) external
+    function checkFlight(bytes32 flightKey) external
     {
         // @todo: fetchFlightStatus
 
+        fetchFlightStatus(
+            flights[flightKey].airline,
+            flights[flightKey].flight,
+            flights[flightKey].updatedTimestamp
+        );
+
+
         // @todo: call creditInsuree
+
+
     }
 
 
-    /* Flights flow ********************** */
+    /********************************************************************************************/
+    /*                                   FLIGHTS FUNCTIONS                                      */
+    /********************************************************************************************/
+
+    function getFlightsKeyList() public view returns(bytes32[])
+    {
+        return flightsKeyList;
+    }
 
     function registerFlight(uint8 status, string flight)
     external
@@ -182,24 +207,15 @@ contract FlightSuretyApp {
         bytes32 flightKey = getFlightKey(msg.sender, flight, now);
 
         flights[flightKey] = Flight(status, now, msg.sender, flight);
+        flightsKeyList.push(flightKey);
     }
 
-    function getFlightStatus(bytes32 flight) public view returns(uint8)
-    {
-        return flights[flight].statusCode;
-    }
 
     /**
      * @dev Called after oracle has updated flight status
      *
      */
-    function processFlightStatus
-    (
-        address airline,
-        string memory flight,
-        uint256 timestamp,
-        uint8 statusCode
-    )
+    function processFlightStatus(address airline, string memory flight, uint256 timestamp, uint8 statusCode)
     internal
     pure
     {
@@ -209,14 +225,8 @@ contract FlightSuretyApp {
     }
 
 
-    // Generate a request for oracles to fetch flight information
-    function fetchFlightStatus
-    (
-        address airline,
-        string flight,
-        uint256 timestamp
-    )
-    external
+    function fetchFlightStatus(address airline, string flight, uint256 timestamp)
+    public
     {
         uint8 index = getRandomIndex(msg.sender);
 
@@ -231,11 +241,9 @@ contract FlightSuretyApp {
     }
 
 
-
     /********************************************************************************************/
     /*                                     ORACLE MANAGEMENT                                    */
     /********************************************************************************************/
-
 
     uint8 private nonce = 0;
 

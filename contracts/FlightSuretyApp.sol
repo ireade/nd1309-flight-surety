@@ -53,16 +53,23 @@ contract FlightSuretyApp {
     {
         contractOwner = msg.sender;
 
-        // Create first airline
         flightSuretyDataContractAddress = dataContractAddress;
         flightSuretyData = FlightSuretyData(flightSuretyDataContractAddress);
 
+
         // Initial flights
-        for (uint8 i = 0; i < 20; i++) {
-            bytes32 flightKey = getFlightKey(contractOwner, "FLIGHT1", now);
-            flights[flightKey] = Flight(STATUS_CODE_UNKNOWN, now, contractOwner, "FLIGHT1");
-            flightsKeyList.push(flightKey);
-        }
+
+        bytes32 flightKey1 = getFlightKey(contractOwner, "FLIGHT1", now);
+        flights[flightKey1] = Flight(STATUS_CODE_UNKNOWN, now, contractOwner, "FLIGHT1");
+        flightsKeyList.push(flightKey1);
+
+        bytes32 flightKey2 = getFlightKey(contractOwner, "FLIGHT2", now);
+        flights[flightKey2] = Flight(STATUS_CODE_UNKNOWN, now, contractOwner, "FLIGHT2");
+        flightsKeyList.push(flightKey2);
+
+        bytes32 flightKey3 = getFlightKey(contractOwner, "FLIGHT3", now);
+        flights[flightKey3] = Flight(STATUS_CODE_UNKNOWN, now, contractOwner, "FLIGHT3");
+        flightsKeyList.push(flightKey3);
     }
 
     function isOperational() public view returns (bool)
@@ -85,6 +92,7 @@ contract FlightSuretyApp {
     event AirlineApplied(address airline);
     event AirlineRegistered(address airline);
     event AirlinePaid(address airline);
+
 
     function applyForAirlineRegistration(string airlineName) external
     {
@@ -132,7 +140,9 @@ contract FlightSuretyApp {
 
     event PassengerInsuranceBought(address passenger, bytes32 flightKey);
 
-    function purchaseInsurance(bytes32 flightKey) external payable
+
+    function purchaseInsurance(bytes32 flightKey)
+    external payable
     {
         require(bytes(flights[flightKey].flight).length > 0, "Flight does not exist");
 
@@ -144,22 +154,6 @@ contract FlightSuretyApp {
         flightSuretyData.createInsurance(msg.sender, flightKey, msg.value);
 
         emit PassengerInsuranceBought(msg.sender, flightKey);
-    }
-
-    function checkFlight(bytes32 flightKey) external
-    {
-        // @todo: fetchFlightStatus
-
-        fetchFlightStatus(
-            flights[flightKey].airline,
-            flights[flightKey].flight,
-            flights[flightKey].updatedTimestamp
-        );
-
-
-        // @todo: call creditInsuree
-
-
     }
 
 
@@ -184,6 +178,9 @@ contract FlightSuretyApp {
     mapping(bytes32 => Flight) private flights;
     bytes32[] private flightsKeyList;
 
+    event FlightStatusProcessed(address airline, string flight, uint8 statusCode);
+
+
     function getFlightsKeyList() public view returns(bytes32[])
     {
         return flightsKeyList;
@@ -199,34 +196,30 @@ contract FlightSuretyApp {
         flightsKeyList.push(flightKey);
     }
 
-
-    /**
-     * @dev Called after oracle has updated flight status
-     *
-     */
     function processFlightStatus(address airline, string memory flight, uint256 timestamp, uint8 statusCode)
-    internal
-    pure
+    private
     {
-        //bytes32 flightKey = getFlightKey(msg.sender, flight, now);
+        bytes32 flightKey = getFlightKey(airline, flight, timestamp);
+        flights[flightKey].statusCode = statusCode;
 
-        // @todo update flight status
+        emit FlightStatusProcessed(airline, flight, statusCode);
     }
 
-
-    function fetchFlightStatus(address airline, string flight, uint256 timestamp)
-    public
+    function fetchFlightStatus(bytes32 flightKey)
+    external
     {
+        Flight memory flight = flights[flightKey];
+
         uint8 index = getRandomIndex(msg.sender);
 
-        // Generate a unique key for storing the request
-        bytes32 key = keccak256(abi.encodePacked(index, airline, flight, timestamp));
+        bytes32 key = keccak256(abi.encodePacked(index, flight.airline, flight.flight, flight.updatedTimestamp));
+
         oracleResponses[key] = ResponseInfo({
-            requester : msg.sender,
-            isOpen : true
+                requester : msg.sender,
+                isOpen : true
             });
 
-        emit OracleRequest(index, airline, flight, timestamp);
+        emit OracleRequest(index, flight.airline, flight.flight, flight.updatedTimestamp);
     }
 
 
@@ -257,16 +250,12 @@ contract FlightSuretyApp {
     mapping(bytes32 => ResponseInfo) private oracleResponses;
 
 
-    // Events
-
     event FlightStatusInfo(address airline, string flight, uint256 timestamp, uint8 status);
 
     event OracleReport(address airline, string flight, uint256 timestamp, uint8 status);
 
     event OracleRequest(uint8 index, address airline, string flight, uint256 timestamp);
 
-
-    // Functions
 
     function registerOracle() external payable
     {
@@ -294,8 +283,12 @@ contract FlightSuretyApp {
     )
     external
     {
-        require((oracles[msg.sender].indexes[0] == index) || (oracles[msg.sender].indexes[1] == index) || (oracles[msg.sender].indexes[2] == index), "Index does not match oracle request");
-
+        require(
+            (oracles[msg.sender].indexes[0] == index) ||
+            (oracles[msg.sender].indexes[1] == index) ||
+            (oracles[msg.sender].indexes[2] == index),
+                "Index does not match oracle request"
+        );
 
         bytes32 key = keccak256(abi.encodePacked(index, airline, flight, timestamp));
         require(oracleResponses[key].isOpen, "Flight or timestamp do not match oracle request");
@@ -308,7 +301,6 @@ contract FlightSuretyApp {
 
             emit FlightStatusInfo(airline, flight, timestamp, statusCode);
 
-            // Handle flight status as appropriate
             processFlightStatus(airline, flight, timestamp, statusCode);
         }
     }
@@ -343,12 +335,10 @@ contract FlightSuretyApp {
     {
         uint8 maxValue = 10;
 
-        // Pseudo random number...the incrementing nonce adds variation
         uint8 random = uint8(uint256(keccak256(abi.encodePacked(blockhash(block.number - nonce++), account))) % maxValue);
 
         if (nonce > 250) {
             nonce = 0;
-            // Can only fetch blockhashes for last 256 blocks so we adapt
         }
 
         return random;

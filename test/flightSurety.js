@@ -184,3 +184,22 @@ it('Passenger cannot buy more than 1 ether of insurance', async function () {
     assert.equal(failed, true, "Passenger was able to purchase insurance of more than 1 ether");
 });
 
+it('Passenger can check status of flight', async function () {
+
+    const flightKeyList = await config.flightSuretyApp.getFlightsKeyList();
+
+    const flightKey = flightKeyList[0];
+
+    const fetchFlightStatus = await config.flightSuretyApp.fetchFlightStatus(flightKey);
+
+    truffleAssert.eventEmitted(fetchFlightStatus, 'OracleRequest', (ev) => {
+        return ev;
+    });
+
+
+    truffleAssert.eventEmitted(fetchFlightStatus, 'OracleRequest', (ev) => {
+        return ev;
+    });
+});
+
+

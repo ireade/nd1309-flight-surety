@@ -5,7 +5,7 @@ const BigNumber = require('bignumber.js');
 let config;
 let accounts;
 
-const TEST_ORACLES_COUNT = 10;
+const TEST_ORACLES_COUNT = 15;
 
 // Watch contract events
 const STATUS_CODE_UNKNOWN = 0;
@@ -58,7 +58,6 @@ it('can request flight status', async () => {
 
     console.log(`Index: ${emittedIndex}`);
 
-
     // Find matching oracles
 
     const relevantOracles = [];
@@ -72,7 +71,6 @@ it('can request flight status', async () => {
     console.log(relevantOracles);
 
     // Have matching oracles return response
-
 
     relevantOracles.forEach(async (account) => {
         const statusCode = STATUS_CODE_ON_TIME; //@todo: randomise

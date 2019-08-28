@@ -7,8 +7,8 @@ import BigNumber from 'bignumber.js';
 const config = Config['localhost'];
 const web3 = new Web3(new Web3.providers.WebsocketProvider(config.url.replace('http', 'ws')));
 
+init();
 const flightSuretyApp = new web3.eth.Contract(FlightSuretyApp.abi, config.appAddress);
-
 const oracles = [];
 
 async function init() {
@@ -21,8 +21,7 @@ async function init() {
 
     simulateFetchFlightStatus(accounts[0]);
 
-    const oracleAccounts = [ accounts[1], accounts[2] ];
-    //registerOracles(oracleAccounts);
+    //registerOracles(accounts.slice(1, 4));
 }
 
 async function simulateFetchFlightStatus(owner) {
@@ -41,13 +40,13 @@ async function registerOracles(oracleAccounts) {
 
     const fee = await flightSuretyApp.methods.REGISTRATION_FEE().call();
 
-    //const RESPONSES = [0, 10, 20, 30, 40, 50]; @todo: change
-    const RESPONSES = [0, 20];
+    //const STATUS_CODES = [0, 10, 20, 30, 40, 50]; @todo: change
+    const STATUS_CODES = [0, 20];
 
     for (let i = 0; i < oracleAccounts.length; i++) {
 
         const address = oracleAccounts[i];
-        const response = RESPONSES[Math.floor(Math.random()*RESPONSES.length)];
+        const statusCode = STATUS_CODES[Math.floor(Math.random() * STATUS_CODES.length)];
 
         await flightSuretyApp.methods.registerOracle().send({
             from: address,
@@ -56,26 +55,37 @@ async function registerOracles(oracleAccounts) {
         });
 
         const indexes = await flightSuretyApp.methods.getMyIndexes().call({
-            from: address
+            from: address,
         });
 
-        oracles.push({ address, indexes, response });
+        oracles.push({ address, indexes, statusCode });
     }
 
     console.log(oracles);
 }
 
-async function sendOracleResponse() {
+async function respondToFetchFlightStatus(index, airline, flight, timestamp) {
 
+    const relevantOracles = [];
+
+    oracles.forEach((oracle) => {
+        if ( BigNumber(oracle.indexes[0]).isEqualTo(index) ) relevantOracles.push( oracle );
+        if ( BigNumber(oracle.indexes[1]).isEqualTo(index) ) relevantOracles.push( oracle );
+        if ( BigNumber(oracle.indexes[2]).isEqualTo(index) ) relevantOracles.push( oracle );
+    });
+
+    relevantOracles.forEach(async (oracle) => {
+        await flightSuretyApp.methods.submitOracleResponse(
+            index,
+            airline,
+            flight,
+            timestamp,
+            oracle.statusCode
+        ).call({
+            from: oracle.address
+        });
+    });
 }
-
-
-init();
-
-
-
-// API
-
 
 const app = express();
 app.get('/api', (req, res) => {

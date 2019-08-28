@@ -78,7 +78,7 @@ it('can request flight status', async () => {
     }
 
 
-    // Matching oracles should
+    // Matching oracles should respond
 
     relevantOracles.forEach(async (oracle) => {
         const submitOracleResponse = await config.flightSuretyApp.submitOracleResponse(

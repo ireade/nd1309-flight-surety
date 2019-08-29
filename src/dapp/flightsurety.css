@@ -104,7 +104,8 @@ section {
 
 .description {
     font-style: italic;
-    margin-bottom: 10px;
+    margin-bottom: 15px;
+    margin-top: -15px
 }
 
 .row .field,

@@ -67,18 +67,18 @@ class App {
         if (this.insurances.length === 0) html = `<p>Purchase insurance above.</p>`;
 
         this.insurances.forEach((insurance, index) => {
-            const prettyDate = new Date(insurance.timestamp * 1000).toDateString();
+            const prettyDate = new Date(insurance.flight.timestamp * 1000).toDateString();
 
             let button = `<button data-action="1" data-insurance-index="${index}">Check Status</button>`;
             if (insurance.state === "1") button = `<button disabled>Claim Insurance</button>`;
-            else if (insurance.statusCode === "20") button = `<button data-action="2" data-insurance-index="${index}">Claim Insurance</button>`;
+            else if (insurance.flight.statusCode === "20") button = `<button data-action="2" data-insurance-index="${index}">Claim Insurance</button>`;
 
             html += `
             <li data-insurance-index="${index}">
                 <div>
-                    <p><strong>${insurance.flight} on ${prettyDate}</strong></p>
+                    <p><strong>${insurance.flight.flight} on ${prettyDate}</strong></p>
                     <p>${insurance.amount} ETH insurance bought</p>
-                    <p>${insurance.statusCode} code</p>
+                    <p>${insurance.flight.statusCode} code</p>
                 </div>
                 <div>
                     ${button}
@@ -115,7 +115,6 @@ class App {
     async listenForFlightStatusUpdate() {
         this.contract.flightSuretyApp.events.FlightStatusInfo({fromBlock: 0}, (error, event) => {
             if (error) return console.log(error);
-
             if (!event.returnValues) return console.error("No returnValues");
 
             if (this.flights.length === 0) return;
@@ -131,8 +130,6 @@ class App {
     }
 
     async claimInsurance(airline, flight, timestamp) {
-        console.log("claim insurance");
-
         this.contract.claimInsurance(airline, flight, timestamp)
             .then((res) => {
                 this.getFlights();
@@ -169,12 +166,12 @@ document.addEventListener('click', (ev) => {
         case 1:
             insuranceIndex = ev.target.dataset.insuranceIndex;
             insurance = Application.insurances[insuranceIndex];
-            Application.fetchFlightStatus(insurance.airline, insurance.flight, insurance.timestamp);
+            Application.fetchFlightStatus(insurance.flight.airline, insurance.flight.flight, insurance.flight.timestamp);
             break;
         case 2:
             insuranceIndex = ev.target.dataset.insuranceIndex;
             insurance = Application.insurances[insuranceIndex];
-            Application.claimInsurance(insurance.airline, insurance.flight, insurance.timestamp);
+            Application.claimInsurance(insurance.flight.airline, insurance.flight.flight, insurance.flight.timestamp);
             break;
         case 3:
             Application.requestPayout();

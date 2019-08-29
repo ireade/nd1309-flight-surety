@@ -47,17 +47,18 @@ export default class Contract {
 
     authorizeAppContract(callback) {
         this.flightSuretyData.methods
-            .setCallerAuthorizationStatus(this.config.appAddress, true)
-            .call({ from: this.owner }, () => {
+            .getCallerAuthorizationStatus(this.config.appAddress)
+            .call({ from: this.owner }, (err, isAuthorized) => {
+
+                if (isAuthorized) return callback(isAuthorized);
 
                 this.flightSuretyData.methods
-                    .getCallerAuthorizationStatus(this.config.appAddress)
-                    .call({ from: this.owner }, (err, status) => {
+                    .setCallerAuthorizationStatus(this.config.appAddress, true)
+                    .send({ from: this.owner }, () => {
+                        callback(true);
+                    });
 
-                        callback(status);
-                    }); // end getCallerAuthorizationStatus()
-
-            }); // end setCallerAuthorizationStatus()
+            });
     }
 
 
@@ -116,10 +117,7 @@ export default class Contract {
                 if (insurance.amount !== "0") insurances.push({
                     amount: this.web3.utils.fromWei(insurance.amount, 'ether'),
                     state: insurance.state,
-                    flight: flight.flight,
-                    airline: flight.airline,
-                    timestamp: flight.timestamp,
-                    statusCode: flight.statusCode
+                    flight: flight
                 });
             }))
             .then(() => insurances)

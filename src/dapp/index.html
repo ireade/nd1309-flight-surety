@@ -21,14 +21,13 @@
         <section>
             <h2>Purchase Insurance</h2>
 
-            <div>
-                <label>Flight Key List</label>
-                <select name="purchase-insurance" id="purchase-insurance-flights"></select>
+            <p class="description">Select a flight below to purchase up to 1 ether of insurance</p>
 
-                <input type="number" name="amount" id="purchase-insurance-amount" placeholder="1 ether" value="1">
+            <select name="purchase-insurance" id="purchase-insurance-flights" aria-label="Flights"></select>
 
-                <button class="btn btn-primary" data-action="0">Buy Insurance</button>
-            </div>
+            <input type="number" name="amount" id="purchase-insurance-amount" placeholder="1 ether" value="1">
+
+            <button class="btn" data-action="0">Buy Insurance</button>
         </section>
 
         <section>
@@ -44,7 +43,9 @@
 
             <div id="passenger-balance"></div>
 
-            <button class="btn btn-primary" data-action="3">Payout</button>
+            <br>
+
+            <button class="btn" data-action="3">Request Payout</button>
         </section>
     </main>
 </body>

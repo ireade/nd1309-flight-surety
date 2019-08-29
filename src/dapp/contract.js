@@ -8,41 +8,64 @@ export default class Contract {
     constructor(network, callback) {
 
         this.config = Config[network];
-        this.web3 = new Web3(new Web3.providers.HttpProvider(this.config.url));
-
-        this.flightSuretyApp = new this.web3.eth.Contract(FlightSuretyApp.abi, this.config.appAddress);
-        this.flightSuretyData = new this.web3.eth.Contract(FlightSuretyData.abi, this.config.dataAddress);
-
-        this.initialize(callback);
+        console.log(this.config);
 
         this.owner = null;
         this.passenger = null;
+
+        this.setWeb3Provider()
+            .then(() => this.web3 = new Web3(this.web3Provider))
+            .then(() => {
+                this.flightSuretyApp = new this.web3.eth.Contract(FlightSuretyApp.abi, this.config.appAddress);
+                this.flightSuretyData = new this.web3.eth.Contract(FlightSuretyData.abi, this.config.dataAddress);
+
+                return this.web3.eth.getAccounts((err, accounts) => {
+                    this.owner = accounts[0];
+                    console.log(this.owner);
+                });
+            })
+            .then(() => this.authorizeAppContract(callback))
+            .catch(() => callback(false));
     }
 
-    initialize(callback) {
-        let self = this;
-        this.web3.eth.getAccounts((error, accounts) => {
-           
-            self.owner = accounts[0];
-            self.passenger = accounts[5];
+    async setWeb3Provider() {
 
+        if (window.ethereum) {
+            this.web3Provider = window.ethereum;
+            try {
+                await window.ethereum.enable();
+                console.log("Connected to web3 via window.ethereum");
+            } catch (error) {
+                console.error("User denied account access");
+            }
+        } else if (window.web3) {
+            this.web3Provider = window.web3.currentProvider;
+            console.log("Connected to web3 via window.web3.currentProvider");
+        } else {
+            this.web3Provider = new Web3.providers.HttpProvider(this.config.url);
+            console.warn(`No web3 detected. Falling back to ${this.config.url}`);
+        }
 
-            // Authorize contract
-
-            self.flightSuretyData.methods
-                .setCallerAuthorizationStatus(self.config.appAddress, true)
-                .call({ from: self.owner }, () => {
-
-                    self.flightSuretyData.methods
-                        .getCallerAuthorizationStatus(self.config.appAddress)
-                        .call({ from: self.owner }, (err, status) => {
-
-                            callback(status);
-                        }); // end getCallerAuthorizationStatus()
-
-                }); // end setCallerAuthorizationStatus()
-        });
+        return this.web3Provider;
     }
+
+    authorizeAppContract(callback) {
+        this.flightSuretyData.methods
+            .setCallerAuthorizationStatus(this.config.appAddress, true)
+            .call({ from: this.owner }, () => {
+
+                this.flightSuretyData.methods
+                    .getCallerAuthorizationStatus(this.config.appAddress)
+                    .call({ from: this.owner }, (err, status) => {
+
+                        callback(status);
+                    }); // end getCallerAuthorizationStatus()
+
+            }); // end setCallerAuthorizationStatus()
+    }
+
+
+    /* */
 
 
     isOperational(callback) {

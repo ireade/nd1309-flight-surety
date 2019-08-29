@@ -163,20 +163,27 @@ contract FlightSuretyApp {
         return flightSuretyData.getInsurance(msg.sender, flight);
     }
 
-    // @todo: claim insurance
-
-    function claimInsurance(string flight)
+    function claimInsurance(address airline, string flight, uint256 timestamp)
     external
     {
+        bytes32 flightKey = getFlightKey(airline, flight, timestamp);
+        require(flights[flightKey].statusCode == STATUS_CODE_LATE_AIRLINE, "Flight was not delayed");
 
+        flightSuretyData.claimInsurance(msg.sender, flight);
     }
 
-    // @todo:
+    function getBalance()
+    external
+    view
+    returns (uint256 balance)
+    {
+        balance = flightSuretyData.getPassengerBalance(msg.sender);
+    }
 
-    function getBalance(string flight)
+    function withdrawBalance()
     external
     {
-
+        flightSuretyData.payPassenger(msg.sender);
     }
 
 
@@ -403,8 +410,6 @@ contract FlightSuretyData {
         return 1;
     }
 
-    ///
-
     function createInsurance(address passenger, string flight, uint256 amount)
     {}
 
@@ -414,5 +419,16 @@ contract FlightSuretyData {
         amount = 1;
         state = 1;
     }
+
+    function claimInsurance(address passenger, string flight)
+    {}
+
+    function getPassengerBalance(address passenger) returns (uint256)
+    {
+        return 1;
+    }
+
+    function payPassenger(address passenger)
+    {}
 
 }

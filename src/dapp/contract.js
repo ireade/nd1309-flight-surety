@@ -130,12 +130,50 @@ export default class Contract {
             this.flightSuretyApp.methods
                 .fetchFlightStatus(airline, flight, timestamp)
                 .send(
-                    { from: this.owner},
+                    { from: this.owner },
                     (err, res) => {
                         if (err) reject(err);
                         resolve(res);
                     }
                 );
+        });
+    }
+
+    claimInsurance(airline, flight, timestamp) {
+        return new Promise((resolve, reject) => {
+            this.flightSuretyApp.methods
+                .claimInsurance(airline, flight, timestamp)
+                .send(
+                    { from: this.owner },
+                    (err, res) => {
+                        if (err) reject(err);
+                        resolve(res);
+                    }
+                );
+        });
+    }
+
+    getBalance() {
+        return new Promise((resolve, reject) => {
+            this.flightSuretyApp.methods
+                .getBalance()
+                .call({ from: this.owner }, async (err, balance) => {
+                    resolve(this.web3.utils.fromWei(balance, 'ether'));
+                });
+        });
+    }
+
+    withdrawBalance() {
+        return new Promise((resolve, reject) => {
+            this.flightSuretyApp.methods
+                .withdrawBalance()
+                .send(
+                    { from: this.owner },
+                    (err, res) => {
+                        if (err) reject(err);
+                        resolve(res);
+                    }
+                 );
         });
     }
 }

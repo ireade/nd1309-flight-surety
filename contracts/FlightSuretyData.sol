@@ -198,8 +198,6 @@ contract FlightSuretyData {
         passengerInsurances[passenger][flight] = Insurance(flight, amount, InsuranceState.Bought);
     }
 
-    ////
-
     function claimInsurance(address passenger, string flight)
     external
     requireCallerAuthorized
@@ -208,28 +206,29 @@ contract FlightSuretyData {
 
         passengerInsurances[passenger][flight].state = InsuranceState.Claimed;
 
+        // @todo
         // calculate amount
         passengerBalances[passenger] = passengerBalances[passenger] + passengerInsurances[passenger][flight].amount;
     }
 
-    function getPassengerBalance()
+    function getPassengerBalance(address passenger)
     external
     view
     requireCallerAuthorized
     returns (uint256)
     {
-        return passengerBalances[msg.sender];
+        return passengerBalances[passenger];
     }
 
-    function payPassenger(address passenger, uint256 amount)
+    function payPassenger(address passenger)
     external
     requireCallerAuthorized
     {
-        require(passengerBalances[passenger] >= amount, "Passenger doesn't have enough to withdraw that amount");
+        require(passengerBalances[passenger] > 0, "Passenger doesn't have enough to withdraw that amount");
 
-        passengerBalances[passenger] = passengerBalances[passenger] - amount;
+        passengerBalances[passenger] = 0;
 
-        passenger.transfer(amount);
+        passenger.transfer(passengerBalances[passenger]);
     }
 
 

@@ -8,6 +8,7 @@ class App {
     constructor() {
 
         this.flights = [];
+        this.balance = 0;
 
         this.contract = new Contract('localhost', (authorized) => {
 
@@ -35,6 +36,7 @@ class App {
 
             this.listenForFlightStatusUpdate();
             this.getFlights();
+            this.getBalance();
         });
     }
 
@@ -54,8 +56,8 @@ class App {
         });
 
         this.getPassengerInsurances();
+        this.getBalance();
     }
-
 
     async getPassengerInsurances() {
         this.insurances = await this.contract.getPassengerInsurances(this.flights) || [];
@@ -67,6 +69,10 @@ class App {
         this.insurances.forEach((insurance, index) => {
             const prettyDate = new Date(insurance.timestamp * 1000).toDateString();
 
+            let button = `<button data-action="1" data-insurance-index="${index}">Check Status</button>`;
+            if (insurance.state === "1") button = `<button disabled>Claim Insurance</button>`;
+            else if (insurance.statusCode === "20") button = `<button data-action="2" data-insurance-index="${index}">Claim Insurance</button>`;
+
             html += `
             <li data-insurance-index="${index}">
                 <div>
@@ -75,7 +81,8 @@ class App {
                     <p>${insurance.statusCode} code</p>
                 </div>
                 <div>
-                    <button data-action="1" data-insurance-index="${index}">Check Status</button>
+                    ${button}
+                    
                 </div>
             </li>
             `;
@@ -84,10 +91,11 @@ class App {
         insuredFlightsList.innerHTML = html;
     }
 
-    async purchaseInsurance(flight, amount) {
-        this.contract.purchaseInsurance(flight[0], flight[1], flight[2], amount)
-            .then(() =>  this.getFlights())
-            .catch((error) => console.log("Error purchasing insurance"));
+    async getBalance() {
+        this.contract.getBalance().then((balance) => {
+            this.balance = balance;
+            document.getElementById('passenger-balance').textContent = `${balance} ETH`;
+        });
     }
 
     async fetchFlightStatus(airline, flight, timestamp) {
@@ -116,6 +124,28 @@ class App {
         });
     }
 
+    async purchaseInsurance(flight, amount) {
+        this.contract.purchaseInsurance(flight[0], flight[1], flight[2], amount)
+            .then(() =>  this.getFlights())
+            .catch((error) => console.log("Error purchasing insurance"));
+    }
+
+    async claimInsurance(airline, flight, timestamp) {
+        console.log("claim insurance");
+
+        this.contract.claimInsurance(airline, flight, timestamp)
+            .then((res) => {
+                this.getFlights();
+            })
+            .catch((error) => console.log("Error claiming insurance"));
+    }
+
+    async requestPayout() {
+        this.contract.withdrawBalance()
+            .then(() => this.getBalance())
+            .catch((error) => console.log("Error withdrawing balance"))
+    }
+
 }
 
 const Application = new App();
@@ -127,6 +157,9 @@ document.addEventListener('click', (ev) => {
 
     const action = parseFloat(ev.target.dataset.action);
 
+    let insuranceIndex;
+    let insurance;
+
     switch(action) {
         case 0:
             const flight = DOM.elid('purchase-insurance-flights').value.split("-");
@@ -134,9 +167,17 @@ document.addEventListener('click', (ev) => {
             Application.purchaseInsurance(flight, amount);
             break;
         case 1:
-            const insuranceIndex = ev.target.dataset.insuranceIndex;
-            const insurance = Application.insurances[insuranceIndex];
+            insuranceIndex = ev.target.dataset.insuranceIndex;
+            insurance = Application.insurances[insuranceIndex];
             Application.fetchFlightStatus(insurance.airline, insurance.flight, insurance.timestamp);
+            break;
+        case 2:
+            insuranceIndex = ev.target.dataset.insuranceIndex;
+            insurance = Application.insurances[insuranceIndex];
+            Application.claimInsurance(insurance.airline, insurance.flight, insurance.timestamp);
+            break;
+        case 3:
+            Application.requestPayout();
             break;
     }
 });

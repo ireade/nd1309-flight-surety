@@ -27,19 +27,15 @@
 
                 <input type="number" name="amount" id="purchase-insurance-amount" placeholder="1 ether" value="1">
 
-                <button class="btn btn-primary" id="purchase-insurance">Buy Insurance</button>
+                <button class="btn btn-primary" data-action="0">Buy Insurance</button>
             </div>
         </section>
 
         <section>
-            <h2>Check Flight Status</h2>
+            <h2>Your Insured Flights</h2>
 
-            <div>
-                <label>Flight</label>
-                <select name="check-status" id="check-status-flights"></select>
-                <button class="btn btn-primary" id="submit-oracle">Submit to Oracles</button>
-            </div>
-
+            <ul id="insured-flights">
+            </ul>
         </section>
     </main>
 </body>

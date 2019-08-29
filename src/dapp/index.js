@@ -59,19 +59,29 @@ class App {
 
 
     async getPassengerInsurances() {
-        const insurances = await this.contract.getPassengerInsurances(this.flights) || [];
+        this.insurances = await this.contract.getPassengerInsurances(this.flights) || [];
 
-        console.log(insurances);
+        const insuredFlightsList = DOM.elid("insured-flights");
+        let html = '';
+        if (this.insurances.length === 0) html = `<p>Purchase insurance above.</p>`;
 
-        const checkStatusSelect = DOM.elid('check-status-flights');
-        checkStatusSelect.innerHTML = "";
+        this.insurances.forEach((insurance, index) => {
+            const prettyDate = new Date(insurance.timestamp * 1000).toDateString();
 
-        insurances.forEach((insurance) => {
-            const option = document.createElement('option');
-            option.value = `${insurance.airline}-${insurance.flight}-${insurance.timestamp}`;
-            option.textContent = `${insurance.flight} - ${insurance.amount} ETH`;
-            checkStatusSelect.appendChild(option);
+            html += `
+            <li>
+                <div>
+                    <p><strong>${insurance.flight} on ${prettyDate}</strong></p>
+                    <p>${insurance.amount} ETH insurance bought</p>
+                </div>
+                <div>
+                    <button data-action="1" data-insurance-index="${index}">Check Status</button>
+                </div>
+            </li>
+            `;
         });
+
+        insuredFlightsList.innerHTML = html;
     }
 
     async purchaseInsurance(flight, amount) {
@@ -85,17 +95,20 @@ class App {
             });
     }
 
-    async fetchFlightStatus(flight) {
+    async fetchFlightStatus(airline, flight, timestamp) {
 
-        // display(
-        //     'Oracles',
-        //     'Trigger oracles',
-        //     [ { label: 'Fetch Flight Status', error: error, value: flight[1]} ]
-        // );
 
-        this.contract.fetchFlightStatus(flight[0], flight[1], flight[2])
+
+        this.contract.fetchFlightStatus(airline, flight, timestamp)
             .then((result) => {
                 console.log(result);
+                display(
+                    'Oracles',
+                    'Fetching flight status from oracles',
+                    [
+                        { label: 'Flight', value: flight}
+                     ]
+                );
 
             })
             .catch((error) => {
@@ -109,19 +122,23 @@ const Application = new App();
 
 /* Event Listeners *************************** */
 
-DOM.elid('purchase-insurance').addEventListener('click', () => {
-    let flight = DOM.elid('purchase-insurance-flights').value;
-    flight = flight.split("-");
-    const amount = DOM.elid('purchase-insurance-amount').value;
+document.addEventListener('click', (ev) => {
+    if (!ev.target.dataset.action) return;
 
-    Application.purchaseInsurance(flight, amount);
-});
+    const action = parseFloat(ev.target.dataset.action);
 
-DOM.elid('submit-oracle').addEventListener('click', () => {
-    let flight = DOM.elid('check-status-flights').value;
-    flight = flight.split("-");
-
-    Application.fetchFlightStatus(flight);
+    switch(action) {
+        case 0:
+            const flight = DOM.elid('purchase-insurance-flights').value.split("-");
+            const amount = DOM.elid('purchase-insurance-amount').value;
+            Application.purchaseInsurance(flight, amount);
+            break;
+        case 1:
+            const insuranceIndex = ev.target.dataset.insuranceIndex;
+            const insurance = Application.insurances[insuranceIndex];
+            Application.fetchFlightStatus(insurance.airline, insurance.flight, insurance.timestamp);
+            break;
+    }
 });
 
 /* Utility Functions *************************** */

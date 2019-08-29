@@ -176,8 +176,6 @@ contract FlightSuretyData {
     }
 
     mapping(address => mapping(string => Insurance)) private passengerInsurances;
-    mapping(address => string[]) private passengerInsurancesFlights;
-
     mapping(address => uint256) private passengerBalances;
 
 
@@ -191,15 +189,6 @@ contract FlightSuretyData {
         state = passengerInsurances[passenger][flight].state;
     }
 
-    function getInsuranceCount(address passenger)
-    external
-    view
-    requireCallerAuthorized
-    returns (uint256)
-    {
-        return passengerInsurancesFlights[passenger].length;
-    }
-
     function createInsurance(address passenger, string flight, uint256 amount)
     external
     requireCallerAuthorized
@@ -207,8 +196,6 @@ contract FlightSuretyData {
         require(passengerInsurances[passenger][flight].amount != amount, "Insurance already exists");
 
         passengerInsurances[passenger][flight] = Insurance(flight, amount, InsuranceState.Bought);
-
-        passengerInsurancesFlights[passenger].push(flight);
     }
 
     ////

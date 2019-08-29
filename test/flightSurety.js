@@ -146,7 +146,6 @@ it('Passenger can buy insurance for flight', async function () {
 
     const flight1 = await config.flightSuretyApp.getFlight(0);
     const amount = await config.flightSuretyApp.MAX_INSURANCE_AMOUNT.call();
-    const insuranceCount = await config.flightSuretyApp.getInsuranceCount({ from: passenger });
 
     await config.flightSuretyApp.purchaseInsurance(
         flight1.airline,
@@ -157,9 +156,6 @@ it('Passenger can buy insurance for flight', async function () {
 
     const insuranceState = (await config.flightSuretyApp.getInsurance(flight1.flight, { from: passenger })).state;
     assert.equal(BigNumber(insuranceState), 0, "Insurance is of incorrect state");
-
-    const newInsuranceCount = await config.flightSuretyApp.getInsuranceCount({ from: passenger });
-    assert.equal(parseFloat(newInsuranceCount), parseFloat(insuranceCount) + 1, "Insurance count is incorrect");
 });
 
 

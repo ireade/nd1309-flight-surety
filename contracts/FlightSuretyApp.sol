@@ -163,15 +163,6 @@ contract FlightSuretyApp {
         return flightSuretyData.getInsurance(msg.sender, flight);
     }
 
-    function getInsuranceCount()
-    external
-    view
-    returns (uint256)
-    {
-        return flightSuretyData.getInsuranceCount(msg.sender);
-
-    }
-
     // @todo: claim insurance
 
     function claimInsurance(string flight)
@@ -415,11 +406,6 @@ contract FlightSuretyData {
 
     function createInsurance(address passenger, string flight, uint256 amount)
     {}
-
-    function getInsuranceCount(address passenger) returns (uint256)
-    {
-        return 1;
-    }
 
     function getInsurance(address passenger, string flight)
     returns (uint256 amount, uint256 state)

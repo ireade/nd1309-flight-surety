@@ -69,7 +69,7 @@ class App {
             const prettyDate = new Date(insurance.timestamp * 1000).toDateString();
 
             html += `
-            <li>
+            <li data-insurance-index="${index}">
                 <div>
                     <p><strong>${insurance.flight} on ${prettyDate}</strong></p>
                     <p>${insurance.amount} ETH insurance bought</p>

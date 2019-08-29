@@ -96,6 +96,26 @@ export default class Contract {
             )
     }
 
+    async getPassengerInsurances(flights, callback) {
+        const insurances = [];
+
+        Promise
+            .all(flights.map(async (flight) => {
+                const insurance = await this.flightSuretyApp.methods
+                    .getInsurance(flight.flight)
+                    .call({ from: this.owner });
+
+                if (insurance.amount !== "0") insurances.push({
+                    amount: this.web3.utils.fromWei(insurance.amount, 'ether'),
+                    state: insurance.state,
+                    flight: flight.flight,
+                    airline: flight.airline,
+                    timestamp: flight.timestamp
+                });
+            }))
+            .then(() => callback(null, insurances))
+    }
+
     fetchFlightStatus(airline, flight, timestamp, callback) {
         this.flightSuretyApp.methods
             .fetchFlightStatus(airline, flight, timestamp)

@@ -2,29 +2,44 @@ import DOM from './dom';
 import Contract from './contract';
 import './flightsurety.css';
 
-(async() => {
 
-    const contract = new Contract('localhost', (authorized) => {
+class App {
 
-        if (!authorized) return display(
-            'App contract authorization',
-            'Checks if app contract is authorized to make calls to data contract',
-            [ { label: 'Status', value: authorized} ]
-        );
+    constructor() {
 
-        contract.isOperational((error, result) => {
-            display(
-                'Operational Status',
-                'Checks if contract is operational',
-                [ { label: 'Status', error: error, value: result} ]
+        this.contract = new Contract('localhost', (authorized) => {
+
+            if (!authorized) return display(
+                'App contract authorization',
+                'Checks if app contract is authorized to make calls to data contract',
+                [ { label: 'Status', value: authorized} ]
             );
+
+            this.contract.isOperational((error, result) => {
+                display(
+                    'Operational Status',
+                    'Checks if contract is operational',
+                    [ { label: 'Status', error: error, value: result} ]
+                );
+            });
+
+            // @todo: events
+
+            this.getFlights();
+            this.addEventListeners();
         });
+    }
 
-        contract.getFlights((error, flights) => {
+
+    getFlights() {
+
+        this.contract.getFlights((error, flights) => {
+
+            this.flights = flights;
+
             const purchaseInsuranceSelect = DOM.elid('purchase-insurance-flights');
-            const checkStatusSelect = DOM.elid('check-status-flights');
 
-            flights.forEach((flight) => {
+            this.flights.forEach((flight) => {
                 const option = document.createElement('option');
                 option.value = `${flight.airline}-${flight.flight}-${flight.timestamp}`;
                 const prettyDate = new Date(flight.timestamp * 1000).toDateString();
@@ -32,33 +47,47 @@ import './flightsurety.css';
                 purchaseInsuranceSelect.appendChild(option);
             });
 
-            flights.forEach((flight) => {
-                const option = document.createElement('option');
-                option.value = `${flight.airline}-${flight.flight}-${flight.timestamp}`;
-                const prettyDate = new Date(flight.timestamp * 1000).toDateString();
-                option.textContent = `${flight.flight} on ${prettyDate}`;
-                checkStatusSelect.appendChild(option);
-            });
+            this.getPassengerInsurances();
+
         });
 
+    }
 
-        /* Events interactions */
+
+    getPassengerInsurances() {
+
+        this.contract.getPassengerInsurances(this.flights, (err, insurances) => {
+            console.log(insurances);
+
+            const checkStatusSelect = DOM.elid('check-status-flights');
+            checkStatusSelect.innerHTML = "";
+
+            insurances.forEach((insurance) => {
+                const option = document.createElement('option');
+                option.value = `${insurance.airline}-${insurance.flight}-${insurance.timestamp}`;
+                option.textContent = `${insurance.flight} - ${insurance.amount} ETH`;
+                checkStatusSelect.appendChild(option);
+            });
+        })
+
+    }
 
 
-        /* User interactions */
-
+    addEventListeners() {
         DOM.elid('purchase-insurance').addEventListener('click', () => {
             let flight = DOM.elid('purchase-insurance-flights').value;
             flight = flight.split("-");
             const amount = DOM.elid('purchase-insurance-amount').value;
 
-            contract.purchaseInsurance(
+            this.contract.purchaseInsurance(
                 flight[0],
                 flight[1],
                 flight[2],
                 amount,
                 (error, result) => {
-                    console.log(error, result)
+                    console.log(error, result);
+
+                    this.getPassengerInsurances();
                 }
             );
         }); // purchase-insurance
@@ -67,7 +96,7 @@ import './flightsurety.css';
             let flight = DOM.elid('check-status-flights').value;
             flight = flight.split("-");
 
-            contract.fetchFlightStatus(
+            this.contract.fetchFlightStatus(
                 flight[0],
                 flight[1],
                 flight[2],
@@ -80,10 +109,17 @@ import './flightsurety.css';
                 }
             );
         }); // submit-oracle
+    }
 
-    });
 
-})();
+}
+
+
+new App();
+
+
+
+
 
 
 function display(title, description, results) {

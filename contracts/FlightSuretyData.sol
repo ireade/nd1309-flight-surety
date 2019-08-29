@@ -175,17 +175,29 @@ contract FlightSuretyData {
         InsuranceState state;
     }
 
-    mapping(address => mapping(string => Insurance)) passengerInsurances;
-    mapping(address => uint256) passengerBalances;
+    mapping(address => mapping(string => Insurance)) private passengerInsurances;
+    mapping(address => string[]) private passengerInsurancesFlights;
+
+    mapping(address => uint256) private passengerBalances;
 
 
-    function getInsuranceState(address passenger, string flight)
+    function getInsurance(address passenger, string flight)
     external
     view
     requireCallerAuthorized
-    returns (InsuranceState)
+    returns (uint256 amount, InsuranceState state)
     {
-        return passengerInsurances[passenger][flight].state;
+        amount = passengerInsurances[passenger][flight].amount;
+        state = passengerInsurances[passenger][flight].state;
+    }
+
+    function getInsuranceCount(address passenger)
+    external
+    view
+    requireCallerAuthorized
+    returns (uint256)
+    {
+        return passengerInsurancesFlights[passenger].length;
     }
 
     function createInsurance(address passenger, string flight, uint256 amount)
@@ -195,26 +207,28 @@ contract FlightSuretyData {
         require(passengerInsurances[passenger][flight].amount != amount, "Insurance already exists");
 
         passengerInsurances[passenger][flight] = Insurance(flight, amount, InsuranceState.Bought);
+
+        passengerInsurancesFlights[passenger].push(flight);
     }
+
+    ////
 
     function claimInsurance(address passenger, string flight)
     external
     requireCallerAuthorized
     {
-        passengerInsurances[passenger][flight].state = InsuranceState.Claimed;
-        creditPassengerBalance(passenger, passengerInsurances[passenger][flight].amount);
-    }
+        require(passengerInsurances[passenger][flight].state == InsuranceState.Bought, "Insurance already claimed");
 
-    function creditPassengerBalance(address passenger, uint256 amount)
-    private
-    requireCallerAuthorized
-    {
-        passengerBalances[passenger] = passengerBalances[passenger] + amount;
+        passengerInsurances[passenger][flight].state = InsuranceState.Claimed;
+
+        // calculate amount
+        passengerBalances[passenger] = passengerBalances[passenger] + passengerInsurances[passenger][flight].amount;
     }
 
     function getPassengerBalance()
     external
     view
+    requireCallerAuthorized
     returns (uint256)
     {
         return passengerBalances[msg.sender];

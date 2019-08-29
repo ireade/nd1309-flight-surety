@@ -147,8 +147,6 @@ contract FlightSuretyApp {
 
         require(bytes(flights[flightKey].flight).length > 0, "Flight does not exist");
 
-        // @todo: make sure insurance doesn't already exist
-
         require(msg.value <= MAX_INSURANCE_AMOUNT, "Passengers can buy a maximum of 1 ether for insurance");
 
         flightSuretyDataContractAddress.transfer(msg.value);
@@ -157,7 +155,38 @@ contract FlightSuretyApp {
         emit PassengerInsuranceBought(msg.sender, flightKey);
     }
 
-    // @todo: check
+    function getInsurance(string flight)
+    external
+    view
+    returns (uint256 amount, uint256 state)
+    {
+        return flightSuretyData.getInsurance(msg.sender, flight);
+    }
+
+    function getInsuranceCount()
+    external
+    view
+    returns (uint256)
+    {
+        return flightSuretyData.getInsuranceCount(msg.sender);
+
+    }
+
+    // @todo: claim insurance
+
+    function claimInsurance(string flight)
+    external
+    {
+
+    }
+
+    // @todo:
+
+    function getBalance(string flight)
+    external
+    {
+
+    }
 
 
     /********************************************************************************************/
@@ -386,5 +415,17 @@ contract FlightSuretyData {
 
     function createInsurance(address passenger, string flight, uint256 amount)
     {}
+
+    function getInsuranceCount(address passenger) returns (uint256)
+    {
+        return 1;
+    }
+
+    function getInsurance(address passenger, string flight)
+    returns (uint256 amount, uint256 state)
+    {
+        amount = 1;
+        state = 1;
+    }
 
 }

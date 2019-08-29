@@ -53,7 +53,6 @@ contract FlightSuretyData {
     external
     payable
     {
-        // @todo: move fallback function to app
     }
 
     function isOperational()

@@ -14,7 +14,7 @@ const oracles = [];
 async function init() {
     const accounts = await web3.eth.getAccounts();
 
-    const NUMBER_OF_ORACLES = 15;
+    const NUMBER_OF_ORACLES = 40;
     registerOracles(accounts.slice(1, NUMBER_OF_ORACLES + 1));
 
     flightSuretyApp.events.OracleRequest({fromBlock: 0}, (error, event) => {
@@ -34,8 +34,7 @@ async function init() {
 async function registerOracles(oracleAccounts) {
 
     const fee = await flightSuretyApp.methods.REGISTRATION_FEE().call();
-    //const STATUS_CODES = [0, 10, 20, 30, 40, 50];
-    const STATUS_CODES = [20]; // @todo
+    const STATUS_CODES = [0, 10, 20, 30, 40, 50];
 
     for (let i = 0; i < oracleAccounts.length; i++) {
 

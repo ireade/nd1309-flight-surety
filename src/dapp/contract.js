@@ -18,11 +18,7 @@ export default class Contract {
             .then(() => {
                 this.flightSuretyApp = new this.web3.eth.Contract(FlightSuretyApp.abi, this.config.appAddress);
                 this.flightSuretyData = new this.web3.eth.Contract(FlightSuretyData.abi, this.config.dataAddress);
-
-                return this.web3.eth.getAccounts((err, accounts) => {
-                    this.owner = accounts[0];
-                    console.log(this.owner);
-                });
+                return this.web3.eth.getAccounts((err, accounts) => this.owner = accounts[0]);
             })
             .then(() => this.authorizeAppContract(callback))
             .catch(() => callback(false));
@@ -68,38 +64,50 @@ export default class Contract {
     /* */
 
 
-    isOperational(callback) {
-        this.flightSuretyApp.methods
-            .isOperational()
-            .call({ from: this.owner}, callback);
+    isOperational() {
+        return new Promise((resolve, reject) => {
+            this.flightSuretyApp.methods
+                .isOperational()
+                .call({ from: this.owner}, (err, res) => {
+                    if (err) reject(err);
+                    resolve(res);
+                });
+        });
     }
 
-    getFlights(callback) {
-        this.flightSuretyApp.methods
-            .getFlightsCount()
-            .call({ from: this.owner }, async (err, flightsCount) => {
-                const flights = [];
-                for (var i = 0; i < flightsCount; i++) {
-                    const res = await this.flightSuretyApp.methods.getFlight(i).call({ from: this.owner });
-                    flights.push(res);
-                }
-                callback(null, flights);
-            });
+    getFlights() {
+        return new Promise((resolve, reject) => {
+            this.flightSuretyApp.methods
+                .getFlightsCount()
+                .call({ from: this.owner }, async (err, flightsCount) => {
+                    const flights = [];
+                    for (var i = 0; i < flightsCount; i++) {
+                        const res = await this.flightSuretyApp.methods.getFlight(i).call({ from: this.owner });
+                        flights.push(res);
+                    }
+                    resolve(flights);
+                });
+        });
     }
 
     purchaseInsurance(airline, flight, timestamp, amount, callback) {
-        this.flightSuretyApp.methods
-            .purchaseInsurance(airline, flight, timestamp)
-            .send(
-                {from: this.owner, value: this.web3.utils.toWei(amount.toString(), 'ether')},
-                callback
-            )
+        return new Promise((resolve, reject) => {
+            this.flightSuretyApp.methods
+                .purchaseInsurance(airline, flight, timestamp)
+                .send(
+                    {from: this.owner, value: this.web3.utils.toWei(amount.toString(), 'ether')},
+                    (err, res) => {
+                        if (err) reject(err);
+                        resolve(res);
+                    }
+                )
+        });
     }
 
-    async getPassengerInsurances(flights, callback) {
+    getPassengerInsurances(flights) {
         const insurances = [];
 
-        Promise
+        return Promise
             .all(flights.map(async (flight) => {
                 const insurance = await this.flightSuretyApp.methods
                     .getInsurance(flight.flight)
@@ -113,14 +121,20 @@ export default class Contract {
                     timestamp: flight.timestamp
                 });
             }))
-            .then(() => callback(null, insurances))
+            .then(() => insurances)
     }
 
-    fetchFlightStatus(airline, flight, timestamp, callback) {
-        this.flightSuretyApp.methods
-            .fetchFlightStatus(airline, flight, timestamp)
-            .send({ from: this.owner}, (error, result) => {
-                callback(error, result);
-            });
+    fetchFlightStatus(airline, flight, timestamp) {
+        return new Promise((resolve, reject) => {
+            this.flightSuretyApp.methods
+                .fetchFlightStatus(airline, flight, timestamp)
+                .send(
+                    { from: this.owner},
+                    (err, res) => {
+                        if (err) reject(err);
+                        resolve(res);
+                    }
+                );
+        });
     }
 }

@@ -40,7 +40,6 @@ class App {
         });
     }
 
-
     async getFlights() {
         this.flights = await this.contract.getFlights() || [];
 
@@ -88,7 +87,7 @@ class App {
         this.contract.purchaseInsurance(flight[0], flight[1], flight[2], amount)
             .then((result) => {
                 console.log(result);
-                this.getPassengerInsurances();
+                this.getFlights();
             })
             .catch((error) => {
                 console.log(error, result);

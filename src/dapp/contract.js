@@ -46,6 +46,8 @@ export default class Contract {
     }
 
     authorizeAppContract(callback) {
+        this.watchOracleResponse();
+
         this.flightSuretyData.methods
             .setCallerAuthorizationStatus(this.config.appAddress, true)
             .call({ from: this.owner }, () => {
@@ -58,6 +60,27 @@ export default class Contract {
                     }); // end getCallerAuthorizationStatus()
 
             }); // end setCallerAuthorizationStatus()
+    }
+
+
+    /* */
+
+    watchOracleResponse() {
+
+        console.log("watchOracleResponse")
+
+
+        this.flightSuretyApp.events.OracleReport({fromBlock: 0}, (error, event) => {
+            if (error) return console.log(error);
+
+            console.log(event)
+
+            if (!event.returnValues) return console.error("No returnValues");
+
+            console.log(event.returnValues)
+
+        });
+
     }
 
 

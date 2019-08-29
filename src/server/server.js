@@ -14,7 +14,7 @@ const oracles = [];
 async function init() {
     const accounts = await web3.eth.getAccounts();
 
-    const NUMBER_OF_ORACLES = 10;
+    const NUMBER_OF_ORACLES = 15;
     registerOracles(accounts.slice(1, NUMBER_OF_ORACLES + 1));
 
     flightSuretyApp.events.OracleRequest({fromBlock: 0}, (error, event) => {
@@ -28,26 +28,13 @@ async function init() {
             event.returnValues.timestamp
         )
     });
-
-    //simulateFetchFlightStatus(accounts[0]);
-}
-
-async function simulateFetchFlightStatus(owner) {
-    console.log("Simulating fetchFlightStatus");
-
-    const airline = owner;
-    const flight = 'ND1309';
-    const timestamp = Math.floor(Date.now() / 1000);
-
-    flightSuretyApp.methods
-        .fetchFlightStatus(airline, flight, timestamp)
-        .call({ from: owner });
 }
 
 async function registerOracles(oracleAccounts) {
 
     const fee = await flightSuretyApp.methods.REGISTRATION_FEE().call();
-    const STATUS_CODES = [0, 10, 20, 30, 40, 50];
+    //const STATUS_CODES = [0, 10, 20, 30, 40, 50];
+    const STATUS_CODES = [0, 20]; // @todo
 
     for (let i = 0; i < oracleAccounts.length; i++) {
 
@@ -60,17 +47,22 @@ async function registerOracles(oracleAccounts) {
             gas: 3000000
         });
 
-        const indexes = await flightSuretyApp.methods.getMyIndexes().call({
-            from: address,
-        });
+        const indexes = await flightSuretyApp.methods
+            .getMyIndexes()
+            .call({ from: address });
 
         oracles.push({ address, indexes, statusCode });
     }
 
-    console.log(oracles);
+    console.log(`${oracles.length} Oracles Registered`);
 }
 
 async function respondToFetchFlightStatus(index, airline, flight, timestamp) {
+
+    if (oracles.length === 0) return;
+
+    console.log("New request ************************")
+    console.log(index, airline, flight, timestamp);
 
     const relevantOracles = [];
 
@@ -80,16 +72,14 @@ async function respondToFetchFlightStatus(index, airline, flight, timestamp) {
         if ( BigNumber(oracle.indexes[2]).isEqualTo(index) ) relevantOracles.push( oracle );
     });
 
+    console.log(`${relevantOracles.length} Matching Oracles will respond`);
+
     relevantOracles.forEach(async (oracle) => {
-        await flightSuretyApp.methods.submitOracleResponse(
-            index,
-            airline,
-            flight,
-            timestamp,
-            oracle.statusCode
-        ).call({
-            from: oracle.address
-        });
+        await flightSuretyApp.methods
+            .submitOracleResponse(index, airline, flight, timestamp, oracle.statusCode)
+            .call({from: oracle.address })
+            .then(() => console.log("Oracle successfully responded with " + oracle.statusCode))
+            .catch((err) => console.log("Oracle response rejected"));
     });
 }
 

@@ -69,21 +69,18 @@ export default class Contract {
 
 
     isOperational(callback) {
-       let self = this;
-       self.flightSuretyApp.methods
+        this.flightSuretyApp.methods
             .isOperational()
-            .call({ from: self.owner}, callback);
+            .call({ from: this.owner}, callback);
     }
 
     getFlights(callback) {
-        let self = this;
-
-        self.flightSuretyApp.methods
+        this.flightSuretyApp.methods
             .getFlightsCount()
-            .call({ from: self.passenger }, async (err, flightsCount) => {
+            .call({ from: this.owner }, async (err, flightsCount) => {
                 const flights = [];
                 for (var i = 0; i < flightsCount; i++) {
-                    const res = await self.flightSuretyApp.methods.getFlight(i).call({ from: self.owner });
+                    const res = await this.flightSuretyApp.methods.getFlight(i).call({ from: this.owner });
                     flights.push(res);
                 }
                 callback(null, flights);
@@ -91,20 +88,18 @@ export default class Contract {
     }
 
     purchaseInsurance(airline, flight, timestamp, amount, callback) {
-        let self = this;
-        self.flightSuretyApp.methods
+        this.flightSuretyApp.methods
             .purchaseInsurance(airline, flight, timestamp)
             .send(
-                {from: self.passenger, value: this.web3.utils.toWei(amount.toString(), 'ether')},
+                {from: this.owner, value: this.web3.utils.toWei(amount.toString(), 'ether')},
                 callback
             )
     }
 
     fetchFlightStatus(airline, flight, timestamp, callback) {
-        let self = this;
-        self.flightSuretyApp.methods
+        this.flightSuretyApp.methods
             .fetchFlightStatus(airline, flight, timestamp)
-            .send({ from: self.passenger}, (error, result) => {
+            .send({ from: this.owner}, (error, result) => {
                 callback(error, result);
             });
     }

@@ -17,16 +17,6 @@ async function init() {
     const NUMBER_OF_ORACLES = 15;
     registerOracles(accounts.slice(1, NUMBER_OF_ORACLES + 1));
 
-    flightSuretyApp.events.OracleReport({fromBlock: 0}, (error, event) => {
-        console.log("OracleReport Event *****************")
-
-        if (error) return console.log(error);
-        if (!event.returnValues) return console.error("No returnValues");
-
-
-    });
-
-
     flightSuretyApp.events.OracleRequest({fromBlock: 0}, (error, event) => {
         if (error) return console.log(error);
         if (!event.returnValues) return console.error("No returnValues");
@@ -38,9 +28,6 @@ async function init() {
             event.returnValues.timestamp
         )
     });
-
-
-
 
 }
 
@@ -91,8 +78,10 @@ async function respondToFetchFlightStatus(index, airline, flight, timestamp) {
     relevantOracles.forEach( (oracle) => {
         flightSuretyApp.methods
             .submitOracleResponse(index, airline, flight, timestamp, oracle.statusCode)
-            .call({from: oracle.address })
-            .then(() => console.log("Oracle successfully responded with " + oracle.statusCode))
+            .send({ from: oracle.address, gas: 5555555 })
+            .then(() => {
+                console.log("Oracle responded with " + oracle.statusCode);
+            })
             .catch((err) => console.log("Oracle response rejected"));
     });
 }

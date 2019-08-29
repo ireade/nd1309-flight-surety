@@ -77,7 +77,6 @@ it('can request flight status', async () => {
         console.warn("Not enough Oracles to pass, try running test again");
     }
 
-
     // One matching oracle should respond
 
     const submitOracleResponse = await config.flightSuretyApp.submitOracleResponse(

@@ -209,11 +209,12 @@ contract FlightSuretyApp {
         return flightsKeyList.length;
     }
 
-    function getFlight(uint256 index) external view returns(address airline, string flight, uint256 timestamp)
+    function getFlight(uint256 index) external view returns(address airline, string flight, uint256 timestamp, uint8 statusCode)
     {
         airline = flights[ flightsKeyList[index] ].airline;
         flight = flights[ flightsKeyList[index] ].flight;
         timestamp = flights[ flightsKeyList[index] ].timestamp;
+        statusCode = flights[ flightsKeyList[index] ].statusCode;
     }
 
     function registerFlight(uint8 status, string flight)

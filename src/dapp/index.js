@@ -33,15 +33,15 @@ class App {
                     );
                 });
 
-
-            // @todo: events
-
+            this.listenForFlightStatusUpdate();
             this.getFlights();
         });
     }
 
     async getFlights() {
         this.flights = await this.contract.getFlights() || [];
+
+        console.log(this.flights);
 
         const purchaseInsuranceSelect = DOM.elid('purchase-insurance-flights');
 
@@ -72,6 +72,7 @@ class App {
                 <div>
                     <p><strong>${insurance.flight} on ${prettyDate}</strong></p>
                     <p>${insurance.amount} ETH insurance bought</p>
+                    <p>${insurance.statusCode} code</p>
                 </div>
                 <div>
                     <button data-action="1" data-insurance-index="${index}">Check Status</button>
@@ -99,9 +100,20 @@ class App {
                         { label: 'Flight', value: flight}
                      ]
                 );
-
             })
             .catch((error) => console.log("Error fetching flight status"));
+    }
+
+    async listenForFlightStatusUpdate() {
+        this.contract.flightSuretyApp.events.FlightStatusInfo({fromBlock: 0}, (error, event) => {
+            if (error) return console.log(error);
+
+            if (!event.returnValues) return console.error("No returnValues");
+
+            if (this.flights.length === 0) return;
+
+            this.getFlights();
+        });
     }
 
 }

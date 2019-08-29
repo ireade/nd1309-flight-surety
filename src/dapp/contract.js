@@ -116,6 +116,7 @@ export default class Contract {
 
                 if (insurance.amount !== "0") insurances.push({
                     amount: this.web3.utils.fromWei(insurance.amount, 'ether'),
+                    payoutAmount: this.web3.utils.fromWei(insurance.payoutAmount, 'ether'),
                     state: insurance.state,
                     flight: flight
                 });

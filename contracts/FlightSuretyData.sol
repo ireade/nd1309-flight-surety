@@ -170,6 +170,7 @@ contract FlightSuretyData {
     struct Insurance {
         string flight;
         uint256 amount;
+        uint256 payoutAmount;
         InsuranceState state;
     }
 
@@ -181,19 +182,20 @@ contract FlightSuretyData {
     external
     view
     requireCallerAuthorized
-    returns (uint256 amount, InsuranceState state)
+    returns (uint256 amount, uint256 payoutAmount, InsuranceState state)
     {
         amount = passengerInsurances[passenger][flight].amount;
+        payoutAmount = passengerInsurances[passenger][flight].payoutAmount;
         state = passengerInsurances[passenger][flight].state;
     }
 
-    function createInsurance(address passenger, string flight, uint256 amount)
+    function createInsurance(address passenger, string flight, uint256 amount, uint256 payoutAmount)
     external
     requireCallerAuthorized
     {
         require(passengerInsurances[passenger][flight].amount != amount, "Insurance already exists");
 
-        passengerInsurances[passenger][flight] = Insurance(flight, amount, InsuranceState.Bought);
+        passengerInsurances[passenger][flight] = Insurance(flight, amount, payoutAmount, InsuranceState.Bought);
     }
 
     function claimInsurance(address passenger, string flight)
@@ -204,9 +206,7 @@ contract FlightSuretyData {
 
         passengerInsurances[passenger][flight].state = InsuranceState.Claimed;
 
-        // @todo
-        // calculate amount
-        passengerBalances[passenger] = passengerBalances[passenger] + passengerInsurances[passenger][flight].amount;
+        passengerBalances[passenger] = passengerBalances[passenger] + passengerInsurances[passenger][flight].payoutAmount;
     }
 
     function getPassengerBalance(address passenger)

@@ -136,6 +136,7 @@ contract FlightSuretyApp {
     /********************************************************************************************/
 
     uint public constant MAX_INSURANCE_AMOUNT = 1 ether;
+    uint public constant INSURANCE_DIVIDER = 2;
 
     event PassengerInsuranceBought(address passenger, bytes32 flightKey);
 
@@ -150,7 +151,10 @@ contract FlightSuretyApp {
         require(msg.value <= MAX_INSURANCE_AMOUNT, "Passengers can buy a maximum of 1 ether for insurance");
 
         flightSuretyDataContractAddress.transfer(msg.value);
-        flightSuretyData.createInsurance(msg.sender, flight, msg.value);
+
+        uint256 payoutAmount = msg.value + ( msg.value / INSURANCE_DIVIDER);
+
+        flightSuretyData.createInsurance(msg.sender, flight, msg.value, payoutAmount);
 
         emit PassengerInsuranceBought(msg.sender, flightKey);
     }
@@ -158,7 +162,7 @@ contract FlightSuretyApp {
     function getInsurance(string flight)
     external
     view
-    returns (uint256 amount, uint256 state)
+    returns (uint256 amount, uint256 payoutAmount, uint256 state)
     {
         return flightSuretyData.getInsurance(msg.sender, flight);
     }
@@ -389,15 +393,19 @@ contract FlightSuretyApp {
 
 contract FlightSuretyData {
 
-    function getAirlineState(address airline) view returns(uint)
+    function getAirlineState(address airline)
+    view
+    returns(uint)
     {
         return 1;
     }
 
-    function createAirline(address airlineAddress, uint8 state, string name) view
+    function createAirline(address airlineAddress, uint8 state, string name)
+    view
     {}
 
-    function updateAirlineState(address airlineAddress, uint8 state) view
+    function updateAirlineState(address airlineAddress, uint8 state)
+    view
     {}
 
     function getTotalPaidAirlines() view returns(uint)
@@ -405,30 +413,39 @@ contract FlightSuretyData {
         return 1;
     }
 
-    function approveAirlineRegistration(address airline, address approver) view returns (uint8)
+    function approveAirlineRegistration(address airline, address approver)
+    view
+    returns (uint8)
     {
         return 1;
     }
 
-    function createInsurance(address passenger, string flight, uint256 amount)
+    function createInsurance(address passenger, string flight, uint256 amount, uint256 payoutAmount)
+    view
     {}
 
     function getInsurance(address passenger, string flight)
-    returns (uint256 amount, uint256 state)
+    view
+    returns (uint256 amount, uint256 payoutAmount, uint256 state)
     {
         amount = 1;
+        payoutAmount = 1;
         state = 1;
     }
 
     function claimInsurance(address passenger, string flight)
+    view
     {}
 
-    function getPassengerBalance(address passenger) returns (uint256)
+    function getPassengerBalance(address passenger)
+    view
+    returns (uint256)
     {
         return 1;
     }
 
     function payPassenger(address passenger)
+    view
     {}
 
 }

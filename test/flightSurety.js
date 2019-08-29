@@ -134,9 +134,7 @@ it('Multiparty consensus required to approve fifth airline', async function () {
 /* Flights                                                                              */
 /****************************************************************************************/
 
-it('Airline can register new flight', async function () {
 
-});
 
 /****************************************************************************************/
 /* Passenger Insurance                                                                  */
@@ -147,6 +145,9 @@ it('Passenger can buy insurance for flight', async function () {
     const flight1 = await config.flightSuretyApp.getFlight(0);
     const amount = await config.flightSuretyApp.MAX_INSURANCE_AMOUNT.call();
 
+    const INSURANCE_DIVIDER = await config.flightSuretyApp.INSURANCE_DIVIDER.call();
+    const expectedPayoutAmount = parseFloat(amount) + (parseFloat(amount)  / parseFloat(INSURANCE_DIVIDER) );
+
     await config.flightSuretyApp.purchaseInsurance(
         flight1.airline,
         flight1.flight,
@@ -154,8 +155,9 @@ it('Passenger can buy insurance for flight', async function () {
         { from: passenger, value: amount }
     );
 
-    const insuranceState = (await config.flightSuretyApp.getInsurance(flight1.flight, { from: passenger })).state;
-    assert.equal(BigNumber(insuranceState), 0, "Insurance is of incorrect state");
+    const insurance = await config.flightSuretyApp.getInsurance(flight1.flight, { from: passenger });
+
+    assert.equal(parseFloat(insurance.payoutAmount), expectedPayoutAmount, "Insurance payout amount is incorrect");
 });
 
 

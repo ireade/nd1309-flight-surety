@@ -77,7 +77,7 @@ class App {
             <li data-insurance-index="${index}">
                 <div>
                     <p><strong>${insurance.flight.flight} on ${prettyDate}</strong></p>
-                    <p>${insurance.amount} ETH insurance bought</p>
+                    <p>${insurance.amount} ETH insurance bought / ${insurance.payoutAmount} ETH payout</p>
                     <p>${insurance.flight.statusCode} code</p>
                 </div>
                 <div>

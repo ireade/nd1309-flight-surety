@@ -78,23 +78,19 @@ it('can request flight status', async () => {
     }
 
 
-    // Matching oracles should respond
+    // One matching oracle should respond
 
-    relevantOracles.forEach(async (oracle) => {
-        const submitOracleResponse = await config.flightSuretyApp.submitOracleResponse(
-            emittedIndex,
-            airline,
-            flight,
-            timestamp,
-            STATUS_CODE_ON_TIME,
-            {from: oracle.address}
-        );
+    const submitOracleResponse = await config.flightSuretyApp.submitOracleResponse(
+        emittedIndex,
+        airline,
+        flight,
+        timestamp,
+        STATUS_CODE_ON_TIME,
+        {from: relevantOracles[1].address}
+    );
 
-        return truffleAssert.eventEmitted(submitOracleResponse, 'OracleReport', (ev) => {
-            return ev.airline === airline && ev.flight === flight;
-        });
+    truffleAssert.eventEmitted(submitOracleResponse, 'OracleReport', (ev) => {
+        return ev.airline === airline && ev.flight === flight;
     });
-
-
 
 });

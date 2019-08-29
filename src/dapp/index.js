@@ -85,22 +85,13 @@ class App {
 
     async purchaseInsurance(flight, amount) {
         this.contract.purchaseInsurance(flight[0], flight[1], flight[2], amount)
-            .then((result) => {
-                console.log(result);
-                this.getFlights();
-            })
-            .catch((error) => {
-                console.log(error, result);
-            });
+            .then(() =>  this.getFlights())
+            .catch((error) => console.log("Error purchasing insurance"));
     }
 
     async fetchFlightStatus(airline, flight, timestamp) {
-
-
-
         this.contract.fetchFlightStatus(airline, flight, timestamp)
-            .then((result) => {
-                console.log(result);
+            .then(() => {
                 display(
                     'Oracles',
                     'Fetching flight status from oracles',
@@ -110,9 +101,7 @@ class App {
                 );
 
             })
-            .catch((error) => {
-                console.log(error, result);
-            });
+            .catch((error) => console.log("Error fetching flight status"));
     }
 
 }

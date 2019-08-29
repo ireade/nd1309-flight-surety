@@ -67,13 +67,13 @@ export default class Contract {
 
     watchOracleResponse() {
 
-        console.log("watchOracleResponse")
+        console.log("Listen for OracleReport");
 
 
-        this.flightSuretyApp.events.OracleReport({fromBlock: 0}, (error, event) => {
+        this.flightSuretyApp.events.OracleReport((error, event) => {
             if (error) return console.log(error);
 
-            console.log(event)
+            console.log(event);
 
             if (!event.returnValues) return console.error("No returnValues");
 

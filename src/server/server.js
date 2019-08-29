@@ -17,6 +17,16 @@ async function init() {
     const NUMBER_OF_ORACLES = 15;
     registerOracles(accounts.slice(1, NUMBER_OF_ORACLES + 1));
 
+    flightSuretyApp.events.OracleReport({fromBlock: 0}, (error, event) => {
+        console.log("OracleReport Event *****************")
+
+        if (error) return console.log(error);
+        if (!event.returnValues) return console.error("No returnValues");
+
+
+    });
+
+
     flightSuretyApp.events.OracleRequest({fromBlock: 0}, (error, event) => {
         if (error) return console.log(error);
         if (!event.returnValues) return console.error("No returnValues");
@@ -28,13 +38,17 @@ async function init() {
             event.returnValues.timestamp
         )
     });
+
+
+
+
 }
 
 async function registerOracles(oracleAccounts) {
 
     const fee = await flightSuretyApp.methods.REGISTRATION_FEE().call();
     //const STATUS_CODES = [0, 10, 20, 30, 40, 50];
-    const STATUS_CODES = [0, 20]; // @todo
+    const STATUS_CODES = [20]; // @todo
 
     for (let i = 0; i < oracleAccounts.length; i++) {
 
@@ -74,8 +88,8 @@ async function respondToFetchFlightStatus(index, airline, flight, timestamp) {
 
     console.log(`${relevantOracles.length} Matching Oracles will respond`);
 
-    relevantOracles.forEach(async (oracle) => {
-        await flightSuretyApp.methods
+    relevantOracles.forEach( (oracle) => {
+        flightSuretyApp.methods
             .submitOracleResponse(index, airline, flight, timestamp, oracle.statusCode)
             .call({from: oracle.address })
             .then(() => console.log("Oracle successfully responded with " + oracle.statusCode))
